@@ -12,7 +12,7 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;width:100%;height:100%;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text)}
-button,input,textarea{font-family:inherit}
+button,input,textarea,select{font-family:inherit}
 .app{max-width:430px;margin:auto;min-height:100vh;background:linear-gradient(180deg,#fff,#f8f9fc);position:relative;overflow:hidden}
 .status{height:28px;padding:7px 18px 0;display:flex;justify-content:space-between;font-size:11px;direction:ltr;color:#111827}
 .top{height:78px;padding:0 20px;display:grid;grid-template-columns:58px 1fr 58px;align-items:center;gap:12px}
@@ -24,14 +24,15 @@ button,input,textarea{font-family:inherit}
 .empty{min-height:210px;padding:34px 24px;text-align:center;color:#7b8497;line-height:2;display:flex;flex-direction:column;align-items:center;justify-content:center}.empty-title{font-size:18px;font-weight:900;color:#70798b;margin-bottom:18px}.empty .btn{width:210px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.stat{padding:18px;min-height:118px}.stat.primary{background:linear-gradient(135deg,var(--violet),var(--blue2));color:#fff;border:0}.stat .k{font-size:12px;font-weight:900;opacity:.75}.stat .v{font-size:32px;font-weight:900;margin-top:12px}.stat .h{font-size:11px;margin-top:7px;opacity:.72}
 .progress{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:4px 0 22px}.bar{height:9px;border-radius:99px;background:#d8dee8}.bar.active{background:var(--blue)}
-.field{margin:18px 0}.label{font-size:13px;font-weight:900;color:#697386;margin-bottom:9px}.input{width:100%;min-height:52px;border:1px solid var(--line);border-radius:18px;background:#f8fafc;padding:0 15px;font-size:15px;color:#202637;text-align:right}.textarea{height:96px;padding-top:12px;resize:none;line-height:1.8}
+.field{margin:16px 0}.label{font-size:13px;font-weight:900;color:#697386;margin-bottom:9px}.input{width:100%;min-height:52px;border:1px solid var(--line);border-radius:18px;background:#f8fafc;padding:0 15px;font-size:15px;color:#202637;text-align:right}.textarea{height:96px;padding-top:12px;resize:none;line-height:1.8}
 .sender-card{padding:14px;margin-bottom:12px}.sender-grid{display:grid;grid-template-columns:1fr;gap:10px}.smallbtn{height:38px;border:1px solid #ffd9d9;border-radius:14px;background:#fff;font-weight:900;color:var(--red);padding:0 12px;margin-top:10px}.add-number{height:50px;width:100%;border:1px dashed #b8c1d1;background:#fbfcff;border-radius:20px;color:var(--blue);font-weight:900;font-size:15px}
 .summary{padding:22px;margin-top:10px}.sumrow{display:grid;grid-template-columns:90px 1fr;gap:8px;margin:18px 0;font-size:16px}.sumrow .k{color:#6b7280}.sumrow .v{font-weight:800}.num-pill{display:block;background:#f3f6fb;border:1px solid var(--line);border-radius:16px;padding:10px;margin:8px 0;font-size:13px}.num-pill b{display:block;color:#202637}.num-pill span{display:block;color:#7b8497;margin-top:4px}
-.btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:26px}.btn{height:58px;border-radius:22px;border:1px solid #d9dee8;background:#fff;font-size:17px;font-weight:900;color:#202637;cursor:pointer}.btn.primary{background:var(--blue);border-color:var(--blue);color:white}.btn.danger{color:var(--red);border-color:#ffd7d7}
-.nav{position:absolute;bottom:0;left:0;right:0;height:86px;background:rgba(255,255,255,.96);border-top:1px solid #edf0f6;display:grid;grid-template-columns:repeat(4,1fr);padding:8px 8px 12px;z-index:10}.nav button{border:0;background:transparent;border-radius:18px;color:#a0a8b7;font-weight:900;font-size:11px;cursor:pointer}.nav button.active{color:var(--blue);background:#eef7ff}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:26px}.btn{height:56px;border-radius:22px;border:1px solid #d9dee8;background:#fff;font-size:16px;font-weight:900;color:#202637;cursor:pointer}.btn.primary{background:var(--blue);border-color:var(--blue);color:white}.btn.danger{color:var(--red);border-color:#ffd7d7}
+.nav{position:absolute;bottom:0;left:0;right:0;height:86px;background:rgba(255,255,255,.97);border-top:1px solid #edf0f6;display:grid;grid-template-columns:repeat(4,1fr);padding:8px 8px 12px;z-index:10;box-shadow:0 -12px 26px rgba(15,23,42,.06)}.nav button{border:0;background:transparent;border-radius:18px;color:#8d96a8;font-weight:900;font-size:11px;cursor:pointer}.nav button.active{color:var(--blue);background:#eef7ff}
 .list{display:flex;flex-direction:column;gap:12px}.row{padding:16px;display:flex;align-items:center;gap:12px}.avatar{width:46px;height:46px;border-radius:17px;background:linear-gradient(135deg,var(--violet),#2563eb);display:grid;place-items:center;color:white;font-weight:900;flex:0 0 auto}.body{flex:1;min-width:0}.rt{font-weight:900;font-size:14px}.rs{font-size:11px;color:var(--muted);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tag{font-size:10px;background:#eafaf2;color:var(--green);border-radius:999px;padding:7px 9px;font-weight:900;white-space:nowrap}.tag.red{background:#fff0f0;color:var(--red)}.tag.blue{background:#eef7ff;color:var(--blue)}
 .fab{position:absolute;left:24px;bottom:116px;width:58px;height:58px;border-radius:22px;border:0;background:linear-gradient(135deg,var(--violet),#2563eb);color:white;font-size:30px;box-shadow:0 18px 35px rgba(109,93,252,.3);z-index:15;display:none;cursor:pointer}.fab:active{transform:scale(.94)}
 .toggle{width:46px;height:26px;border-radius:99px;background:#cbd5e1;position:relative;cursor:pointer}.toggle:after{content:"";width:20px;height:20px;border-radius:50%;background:white;position:absolute;right:3px;top:3px;box-shadow:0 2px 7px #0003}.toggle.on{background:linear-gradient(135deg,var(--violet),#2563eb)}.toggle.on:after{right:23px}
+.actions{display:flex;gap:8px;margin-top:10px}.mini{height:36px;border:1px solid var(--line);background:#fff;border-radius:13px;font-size:12px;font-weight:900;padding:0 12px;color:var(--blue)}
 .toast{position:absolute;left:20px;right:20px;bottom:116px;background:#111827;color:white;border-radius:18px;min-height:48px;display:none;align-items:center;justify-content:center;font-size:13px;z-index:30;padding:8px;text-align:center}
 @media(min-width:900px){body{padding:24px}.app{height:860px;min-height:860px;border-radius:34px;box-shadow:0 30px 90px #0f172a2b}.content{height:calc(860px - 106px)}}
 </style>
@@ -51,8 +52,8 @@ button,input,textarea{font-family:inherit}
       <div class="card stat primary"><div class="k">فیلترها</div><div class="v" id="dashRulesNum">۰</div><div class="h">قانون ذخیره‌شده</div></div>
       <div class="card stat"><div class="k">پیامک‌ها</div><div class="v" id="dashSmsNum">۰</div><div class="h">دریافت‌شده</div></div>
     </div>
-    <div class="card row" style="margin-top:14px"><div class="avatar">⚡</div><div class="body"><div class="rt">وضعیت سرویس</div><div class="rs" id="dashServiceText">در حال بررسی...</div></div><span class="tag" id="dashServiceTag">فعال</span></div>
-    <div class="card row" style="margin-top:12px"><div class="avatar">🔋</div><div class="body"><div class="rt">باتری</div><div class="rs" id="dashBatteryText">برای کار مداوم باید Unrestricted باشد</div></div><span class="tag blue" id="dashBatteryTag">بررسی</span></div>
+    <div class="card row" style="margin-top:14px"><div class="avatar">⚡</div><div class="body"><div class="rt">وضعیت سرویس</div><div class="rs" id="dashServiceText">در حال بررسی...</div></div><div class="toggle" id="dashServiceToggle"></div></div>
+    <div class="card row" id="dashBatteryCard" style="margin-top:12px;cursor:pointer"><div class="avatar">🔋</div><div class="body"><div class="rt">باتری</div><div class="rs" id="dashBatteryText">برای کار مداوم باید Unrestricted باشد</div></div><span class="tag blue" id="dashBatteryTag">بررسی</span></div>
     <button class="btn primary" style="width:100%;margin-top:18px" id="goAddFromDash">افزودن فیلتر جدید</button>
   </div>
 
@@ -63,29 +64,23 @@ button,input,textarea{font-family:inherit}
   </div>
 
   <div class="screen" id="filters"><div class="list" id="rulesList"></div></div>
-  <div class="screen" id="history"><div class="list" id="smsList"></div></div>
+  <div class="screen" id="history"><div class="list" id="messagesList"></div></div>
 
   <div class="screen" id="settings">
-    <div class="card row">
-      <div class="avatar">🔋</div>
-      <div class="body"><div class="rt">تنظیمات مهم Battery</div><div class="rs">برای کار در پس‌زمینه Battery را روی Unrestricted بگذار.</div></div>
-      <button class="btn primary" id="batteryBtn" style="width:112px;height:44px;font-size:13px">تنظیم Battery</button>
-    </div>
-    <div class="card row" style="margin-top:12px">
-      <div class="avatar">SMS</div>
-      <div class="body"><div class="rt">مجوز پیامک</div><div class="rs" id="permText">در شروع برنامه گرفته می‌شود</div></div>
-      <span class="tag" id="permTag">بررسی</span>
-    </div>
-    <div class="card row" style="margin-top:12px">
-      <div class="avatar">ON</div>
-      <div class="body"><div class="rt">فعال‌سازی سرویس</div><div class="rs">دریافت SMS جدید در پس‌زمینه</div></div>
-      <div class="toggle" id="serviceToggle"></div>
-    </div>
-    <div class="card row" style="margin-top:12px">
-      <div class="avatar">?</div>
-      <div class="body"><div class="rt">راهنما</div><div class="rs">کلمات با شرط AND بررسی می‌شوند. فرستنده می‌تواند شماره یا نام مثل MALIAT باشد.</div></div>
-    </div>
-    <button class="btn" id="testSmsBtn" style="width:100%;margin-top:16px">افزودن SMS تست</button>
+    <div class="card row"><div class="avatar">🔋</div><div class="body"><div class="rt">تنظیمات Battery</div><div class="rs">برای کار پس‌زمینه روی Unrestricted بگذار.</div></div><button class="btn primary" id="batteryBtn" style="width:112px;height:44px;font-size:13px">تنظیم</button></div>
+    <div class="card row" style="margin-top:12px"><div class="avatar">ON</div><div class="body"><div class="rt">فعال‌سازی سرویس</div><div class="rs">دریافت و فوروارد SMS جدید</div></div><div class="toggle" id="settingsServiceToggle"></div></div>
+
+    <div class="field"><div class="label">SMTP Host</div><input class="input" id="smtpHost" placeholder="smtp.gmail.com"></div>
+    <div class="field"><div class="label">SMTP Port</div><input class="input" id="smtpPort" placeholder="465"></div>
+    <div class="field"><div class="label">SMTP Username</div><input class="input" id="smtpUsername" placeholder="your@email.com"></div>
+    <div class="field"><div class="label">SMTP Password / App Password</div><input class="input" id="smtpPassword" placeholder="password" type="password"></div>
+    <div class="field"><div class="label">From Email</div><input class="input" id="smtpFrom" placeholder="your@email.com"></div>
+    <button class="btn primary" id="saveSettingsBtn" style="width:100%">ذخیره تنظیمات</button>
+    <button class="btn" id="testIncomingBtn" style="width:100%;margin-top:12px">افزودن SMS تست</button>
+  </div>
+
+  <div class="screen" id="messageDetail">
+    <div id="messageDetailBox"></div>
   </div>
 </section>
 
@@ -93,7 +88,7 @@ button,input,textarea{font-family:inherit}
 
 <nav class="nav">
   <button data-page="settings">تنظیمات</button>
-  <button data-page="history">History</button>
+  <button data-page="history">پیام‌ها</button>
   <button data-page="filters">فیلترها</button>
   <button data-page="dashboard" class="active">داشبورد</button>
 </nav>
@@ -102,15 +97,15 @@ button,input,textarea{font-family:inherit}
 </main>
 
 <script>
-let step=1, editingId="";
-let form={name:"",type:"OTP",senders:[{number:"",note:""}],keywords:"همه",to:"",enabled:true};
-let rules=[], sms=[], statusObj={};
+let step=1, editingId="", detailMessage=null;
+let form={name:"",type:"OTP",senders:[{number:"",note:""}],keywords:"همه",forwardType:"history",smsTarget:"",emailTarget:"",enabled:true};
+let rules=[], messages=[], settings={}, statusObj={};
 const $=id=>document.getElementById(id);
 const bridge=()=>window.AndroidBridge||null;
 
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function fa(n){return String(n).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d])}
-function toast(t){$('toast').textContent=t;$('toast').style.display='flex';clearTimeout(window.tt);window.tt=setTimeout(()=>$('toast').style.display='none',1700)}
+function toast(t){$('toast').textContent=t;$('toast').style.display='flex';clearTimeout(window.tt);window.tt=setTimeout(()=>$('toast').style.display='none',1800)}
 function readStep(){
  if(step===1){form.name=$('fName')?.value.trim()||"";form.type=$('fType')?.value.trim()||"OTP"}
  if(step===2){
@@ -122,9 +117,12 @@ function readStep(){
   });
   form.keywords=$('fKeywords')?.value.trim()||"همه";
  }
- if(step===3){form.to=$('fTo')?.value.trim()||""}
+ if(step===3){
+  form.forwardType=$('fForwardType')?.value||"history";
+  form.smsTarget=$('fSmsTarget')?.value.trim()||"";
+  form.emailTarget=$('fEmailTarget')?.value.trim()||"";
+ }
 }
-
 function show(page){
  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
  $(page).classList.add('active');
@@ -132,109 +130,103 @@ function show(page){
  $('fab').style.display=page==='filters'?'block':'none';
 
  if(page==='dashboard'){ $('title').textContent='داشبورد'; $('subTitle').textContent='وضعیت کلی سیستم'; refresh(); renderDashboard();}
- if(page==='wizard'){ $('title').textContent='افزودن فیلتر'; $('subTitle').textContent='Wizard ساخت فیلتر'; renderStep();}
+ if(page==='wizard'){ $('title').textContent=editingId?'ویرایش فیلتر':'افزودن فیلتر'; $('subTitle').textContent='SMS / Email / History'; renderStep();}
  if(page==='filters'){ $('title').textContent='فیلترها'; $('subTitle').textContent='ساخت، ویرایش و کنترل قوانین'; refresh(); renderRules();}
- if(page==='history'){ $('title').textContent='History'; $('subTitle').textContent='پیامک‌های دریافتی'; refresh(); renderSms();}
- if(page==='settings'){ $('title').textContent='تنظیمات'; $('subTitle').textContent='مجوزها و راهنما'; refresh(); renderSettings();}
+ if(page==='history'){ $('title').textContent='پیام‌ها'; $('subTitle').textContent='History و وضعیت ارسال'; refresh(); renderMessages();}
+ if(page==='settings'){ $('title').textContent='تنظیمات'; $('subTitle').textContent='SMS و Email'; refresh(); renderSettings();}
+ if(page==='messageDetail'){ $('title').textContent='جزئیات پیام'; $('subTitle').textContent='متن و وضعیت ارسال'; renderMessageDetail();}
 }
-
+function resetForm(){step=1;editingId="";form={name:"",type:"OTP",senders:[{number:"",note:""}],keywords:"همه",forwardType:"history",smsTarget:"",emailTarget:"",enabled:true}}
+function editRule(id){
+ const r=rules.find(x=>x.id===id); if(!r)return;
+ editingId=r.id; step=1; form=JSON.parse(JSON.stringify(r));
+ if(!form.senders||!form.senders.length)form.senders=[{number:"",note:""}];
+ show('wizard');
+}
 function renderStep(){
  $('b2').classList.toggle('active',step>=2);$('b3').classList.toggle('active',step>=3);$('b4').classList.toggle('active',step>=4);
  $('backBtn').style.visibility=step>1?'visible':'hidden';
  $('nextBtn').textContent=step===4?'ذخیره':'بعدی';
  let html='';
  if(step===1) html=`<div class="field"><div class="label">نام فیلتر</div><input class="input" id="fName" value="${esc(form.name)}" placeholder="مثلاً بانک‌ها"></div><div class="field"><div class="label">نوع فیلتر</div><input class="input" id="fType" value="${esc(form.type)}" placeholder="OTP / بانک / تبلیغات"></div>`;
- if(step===2) html=`<div class="field"><div class="label">شماره‌های فرستنده</div><div style="font-size:12px;color:#8b94a7;line-height:1.9;margin-bottom:12px">هر شماره جدا داخل یک کارت ثبت می‌شود و توضیح جدا می‌گیرد.</div><div id="sendersBox"></div><button class="add-number" id="addNumberBtn">+ افزودن شماره جدید</button></div><div class="field"><div class="label">کلمات کلیدی</div><textarea class="input textarea" id="fKeywords">${esc(form.keywords)}</textarea></div>`;
- if(step===3) html=`<div class="field"><div class="label">مقصد فوروارد</div><input class="input" id="fTo" value="${esc(form.to)}" placeholder="مثلاً تلگرام مالی"></div><div class="card row"><div class="avatar">ON</div><div class="body"><div class="rt">وضعیت فیلتر</div><div class="rs">فعال باشد</div></div><div class="toggle ${form.enabled?'on':''}" id="enabledToggle"></div></div>`;
- if(step===4) html=`<div class="card summary"><div style="font-size:22px;font-weight:900;margin-bottom:20px">خلاصه</div><div class="sumrow"><div class="k">نام</div><div class="v">${esc(form.name)}</div></div><div class="sumrow"><div class="k">شماره‌ها</div><div class="v">${numberSummary()}</div></div><div class="sumrow"><div class="k">کلمات</div><div class="v">${esc(form.keywords||'همه')}</div></div><div class="sumrow"><div class="k">به</div><div class="v">${esc(form.to||'---')}</div></div><div class="sumrow"><div class="k">نوع</div><div class="v">${esc(form.type)}</div></div></div>`;
+ if(step===2) html=`<div class="field"><div class="label">شماره‌های فرستنده</div><div style="font-size:12px;color:#8b94a7;line-height:1.9;margin-bottom:12px">هر شماره جدا داخل یک کارت ثبت می‌شود و توضیح جدا می‌گیرد.</div><div id="sendersBox"></div><button class="add-number" id="addNumberBtn">+ افزودن شماره جدید</button></div><div class="field"><div class="label">کلمات کلیدی - شرط AND</div><textarea class="input textarea" id="fKeywords">${esc(form.keywords)}</textarea></div>`;
+ if(step===3) html=`<div class="field"><div class="label">نوع فوروارد</div><select class="input" id="fForwardType"><option value="history">فقط History</option><option value="sms">SMS</option><option value="email">Email</option></select></div><div class="field"><div class="label">شماره مقصد SMS</div><input class="input" id="fSmsTarget" value="${esc(form.smsTarget)}" placeholder="0912..."></div><div class="field"><div class="label">ایمیل مقصد</div><input class="input" id="fEmailTarget" value="${esc(form.emailTarget)}" placeholder="example@email.com"></div><div class="card row"><div class="avatar">ON</div><div class="body"><div class="rt">وضعیت فیلتر</div><div class="rs">فعال باشد</div></div><div class="toggle ${form.enabled?'on':''}" id="enabledToggle"></div></div>`;
+ if(step===4) html=`<div class="card summary"><div style="font-size:22px;font-weight:900;margin-bottom:20px">خلاصه</div><div class="sumrow"><div class="k">نام</div><div class="v">${esc(form.name)}</div></div><div class="sumrow"><div class="k">شماره‌ها</div><div class="v">${numberSummary()}</div></div><div class="sumrow"><div class="k">کلمات</div><div class="v">${esc(form.keywords||'همه')}</div></div><div class="sumrow"><div class="k">فوروارد</div><div class="v">${esc(form.forwardType)}</div></div></div>`;
  $('stepBox').innerHTML=html;
  if(step===2) renderSenderCards();
- if(step===3) $('enabledToggle').onclick=()=>{form.enabled=!form.enabled;$('enabledToggle').classList.toggle('on',form.enabled)}
+ if(step===3){
+  $('fForwardType').value=form.forwardType||'history';
+  $('enabledToggle').onclick=()=>{form.enabled=!form.enabled;$('enabledToggle').classList.toggle('on',form.enabled)}
+ }
 }
-
 function numberSummary(){
- if(!form.senders.length) return '<span class="num-pill"><b>همه شماره‌ها</b><span>بدون محدودیت فرستنده</span></span>';
+ if(!form.senders.length)return '<span class="num-pill"><b>همه شماره‌ها</b><span>بدون محدودیت فرستنده</span></span>';
  return form.senders.map(x=>`<span class="num-pill"><b>${esc(x.number||'همه شماره‌ها')}</b><span>${esc(x.note||'بدون توضیح')}</span></span>`).join('');
 }
-
 function renderSenderCards(){
- if(!form.senders.length) form.senders=[{number:"",note:""}];
- $('sendersBox').innerHTML=form.senders.map((x,i)=>`<div class="card sender-card" data-i="${i}"><div class="sender-grid"><div><div class="label">شماره ${fa(i+1)}</div><input class="input sender-number" value="${esc(x.number)}" placeholder="مثلاً 0098100099 یا MALIAT"></div><div><div class="label">توضیح این شماره</div><input class="input sender-note" value="${esc(x.note)}" placeholder="مثلاً بانک ملت، مالیات، حسابداری"></div></div><button class="smallbtn" data-del="${i}">حذف این شماره</button></div>`).join('');
+ if(!form.senders.length)form.senders=[{number:"",note:""}];
+ $('sendersBox').innerHTML=form.senders.map((x,i)=>`<div class="card sender-card"><div class="sender-grid"><div><div class="label">شماره ${fa(i+1)}</div><input class="input sender-number" value="${esc(x.number)}" placeholder="مثلاً 0098100099 یا MALIAT"></div><div><div class="label">توضیح این شماره</div><input class="input sender-note" value="${esc(x.note)}" placeholder="مثلاً بانک ملت، مالیات، حسابداری"></div></div><button class="smallbtn" data-del="${i}">حذف این شماره</button></div>`).join('');
  document.querySelectorAll('[data-del]').forEach(btn=>btn.onclick=()=>{readStep();form.senders.splice(+btn.dataset.del,1);if(!form.senders.length)form.senders.push({number:"",note:""});renderStep()});
  $('addNumberBtn').onclick=()=>{readStep();form.senders.push({number:"",note:""});renderStep()};
 }
-
 function saveRule(){
  readStep();
  if(!form.name){toast('نام فیلتر را وارد کن');step=1;renderStep();return}
  form.senders=form.senders.filter(x=>x.number||x.note);
- const rule={id:editingId,name:form.name,type:form.type,senders:form.senders,keywords:form.keywords,to:form.to,enabled:form.enabled};
+ const rule={id:editingId,name:form.name,type:form.type,senders:form.senders,keywords:form.keywords,forwardType:form.forwardType,smsTarget:form.smsTarget,emailTarget:form.emailTarget,enabled:form.enabled};
  let ok=false;
- if(bridge()) ok=bridge().saveRule(JSON.stringify(rule));
- else{let arr=JSON.parse(localStorage.getItem('rules')||'[]');if(!rule.id)rule.id=String(Date.now());arr.push(rule);localStorage.setItem('rules',JSON.stringify(arr));ok=true}
+ if(bridge()) ok=bridge().saveRule(JSON.stringify(rule)); else{let arr=JSON.parse(localStorage.getItem('rules')||'[]');if(!rule.id)rule.id=String(Date.now());let idx=arr.findIndex(x=>x.id===rule.id);if(idx>=0)arr[idx]=rule;else arr.push(rule);localStorage.setItem('rules',JSON.stringify(arr));ok=true}
  if(ok){toast('فیلتر ذخیره شد');resetForm();refresh();show('filters')}else toast('ذخیره نشد');
 }
-function resetForm(){step=1;editingId="";form={name:"",type:"OTP",senders:[{number:"",note:""}],keywords:"همه",to:"",enabled:true}}
-
 function refresh(){
  if(bridge()){
-  try{
-    rules=JSON.parse(bridge().getRules()||'[]');
-    sms=JSON.parse(bridge().getSms()||'[]');
-    statusObj=JSON.parse(bridge().getStatus()||'{}');
-  }catch(e){statusObj={}}
- }else{
-  rules=JSON.parse(localStorage.getItem('rules')||'[]');
-  sms=[];
-  statusObj={permission:false,enabled:true,battery:false};
- }
+  try{rules=JSON.parse(bridge().getRules()||'[]');messages=JSON.parse(bridge().getMessages()||'[]');settings=JSON.parse(bridge().getSettings()||'{}');statusObj=JSON.parse(bridge().getStatus()||'{}')}catch(e){statusObj={}}
+ }else{rules=JSON.parse(localStorage.getItem('rules')||'[]');messages=[];settings=JSON.parse(localStorage.getItem('settings')||'{}');statusObj={receiveSms:false,sendSms:false,enabled:true,battery:false}}
 }
-
 function renderDashboard(){
- $('dashRulesNum').textContent=fa(rules.length);
- $('dashSmsNum').textContent=fa(sms.length);
- $('dashServiceText').textContent=statusObj.enabled?'سرویس روشن است و پیامک‌ها بررسی می‌شوند':'سرویس خاموش است';
- $('dashServiceTag').textContent=statusObj.enabled?'فعال':'خاموش';
- $('dashServiceTag').classList.toggle('red',!statusObj.enabled);
- $('dashBatteryText').textContent=statusObj.battery?'Battery روی Unrestricted است':'برای کار مطمئن، Battery را Unrestricted کن';
- $('dashBatteryTag').textContent=statusObj.battery?'خوب':'نیازمند تنظیم';
+ $('dashRulesNum').textContent=fa(rules.length); $('dashSmsNum').textContent=fa(messages.length);
+ $('dashServiceText').textContent=statusObj.enabled?'سرویس روشن است':'سرویس خاموش است';
+ $('dashServiceToggle').classList.toggle('on',!!statusObj.enabled);
+ $('dashBatteryText').textContent=statusObj.battery?'Battery روی Unrestricted است':'برای کار مطمئن Battery را Unrestricted کن';
+ $('dashBatteryTag').textContent=statusObj.battery?'خوب':'تنظیم کن';
 }
-
 function renderSettings(){
- $('permText').textContent=statusObj.permission?'مجوز SMS داده شده':'مجوز SMS رد شده یا داده نشده';
- $('permTag').textContent=statusObj.permission?'فعال':'ندارد';
- $('permTag').classList.toggle('red',!statusObj.permission);
- $('serviceToggle').classList.toggle('on',!!statusObj.enabled);
+ $('settingsServiceToggle').classList.toggle('on',!!statusObj.enabled);
+ $('smtpHost').value=settings.smtpHost||''; $('smtpPort').value=settings.smtpPort||'465'; $('smtpUsername').value=settings.smtpUsername||''; $('smtpPassword').value=settings.smtpPassword||''; $('smtpFrom').value=settings.smtpFrom||'';
 }
-
 function renderRules(){
- if(!rules.length){
-  $('rulesList').innerHTML=`<div class="card empty"><div class="empty-title">هنوز فیلتری ثبت نشده</div><button class="btn primary" id="emptyAddBtn">افزودن اولین فیلتر</button></div>`;
-  $('emptyAddBtn').onclick=()=>{resetForm();show('wizard')};
-  return;
- }
- $('rulesList').innerHTML=rules.map(r=>{
-  const nums=(r.senders||[]).map(x=>`${esc(x.number||'همه')} - ${esc(x.note||'بدون توضیح')}`).join('<br>');
-  return `<div class="card row"><div class="avatar">⚡</div><div class="body"><div class="rt">${esc(r.name)}</div><div class="rs">${nums||'همه شماره‌ها'} · ${esc(r.keywords||'همه')}</div></div><span class="tag">${r.enabled?'فعال':'خاموش'}</span></div>`;
- }).join('');
+ if(!rules.length){$('rulesList').innerHTML=`<div class="card empty"><div class="empty-title">هنوز فیلتری ثبت نشده</div><button class="btn primary" id="emptyAddBtn">افزودن اولین فیلتر</button></div>`;$('emptyAddBtn').onclick=()=>{resetForm();show('wizard')};return}
+ $('rulesList').innerHTML=rules.map(r=>{const nums=(r.senders||[]).map(x=>`${esc(x.number||'همه')} - ${esc(x.note||'بدون توضیح')}`).join('<br>');return `<div class="card row"><div class="avatar">⚡</div><div class="body"><div class="rt">${esc(r.name)}</div><div class="rs">${nums||'همه شماره‌ها'} · ${esc(r.forwardType||'history')}</div><div class="actions"><button class="mini edit" data-id="${r.id}">ویرایش</button><button class="mini del" data-id="${r.id}">حذف</button><button class="mini tog" data-id="${r.id}" data-on="${r.enabled?1:0}">${r.enabled?'خاموش':'روشن'}</button></div></div><span class="tag">${r.enabled?'فعال':'خاموش'}</span></div>`}).join('');
+ document.querySelectorAll('.edit').forEach(b=>b.onclick=()=>editRule(b.dataset.id));
+ document.querySelectorAll('.del').forEach(b=>b.onclick=()=>{if(bridge())bridge().deleteRule(b.dataset.id);else localStorage.setItem('rules',JSON.stringify(rules.filter(x=>x.id!==b.dataset.id)));refresh();renderRules();toast('حذف شد')});
+ document.querySelectorAll('.tog').forEach(b=>b.onclick=()=>{const on=b.dataset.on!=='1';if(bridge())bridge().toggleRule(b.dataset.id,on);refresh();renderRules()});
 }
-
-function renderSms(){
- if(!sms.length){$('smsList').innerHTML='<div class="card empty"><div class="empty-title">هنوز SMS واقعی دریافت نشده</div><div>بعد از دریافت پیامک، اینجا نمایش داده می‌شود.</div></div>';return}
- $('smsList').innerHTML=sms.map(m=>`<div class="card row"><div class="avatar">SMS</div><div class="body"><div class="rt">${esc(m.sender)}</div><div class="rs">${esc(m.body)}</div><div class="rs">${esc(m.senderNote||'')}</div></div><span class="tag">${esc(m.rule)}</span></div>`).join('');
+function renderMessages(){
+ if(!messages.length){$('messagesList').innerHTML='<div class="card empty"><div class="empty-title">هنوز پیامکی دریافت نشده</div></div>';return}
+ $('messagesList').innerHTML=messages.map((m,i)=>`<div class="card row msg" data-i="${i}"><div class="avatar">SMS</div><div class="body"><div class="rt">${esc(m.sender)}</div><div class="rs">${esc(m.body)}</div><div class="rs">${esc(m.status||'')}</div></div><span class="tag">${esc(m.ruleName||'')}</span></div>`).join('');
+ document.querySelectorAll('.msg').forEach(x=>x.onclick=()=>{detailMessage=messages[+x.dataset.i];show('messageDetail')});
 }
-
+function renderMessageDetail(){
+ const m=detailMessage;if(!m){$('messageDetailBox').innerHTML='';return}
+ $('messageDetailBox').innerHTML=`<div class="card summary"><div style="font-size:22px;font-weight:900;margin-bottom:18px">${esc(m.sender)}</div><div class="sumrow"><div class="k">فیلتر</div><div class="v">${esc(m.ruleName)}</div></div><div class="sumrow"><div class="k">ارسال</div><div class="v">${esc(m.status)}</div></div><div class="sumrow"><div class="k">مقصد</div><div class="v">${esc(m.forwardTarget)}</div></div><div class="sumrow"><div class="k">خطا</div><div class="v">${esc(m.error)}</div></div><div style="line-height:2;margin-top:18px">${esc(m.body)}</div></div>`;
+}
+function saveSettings(){
+ const s={smtpHost:$('smtpHost').value.trim(),smtpPort:$('smtpPort').value.trim()||'465',smtpUsername:$('smtpUsername').value.trim(),smtpPassword:$('smtpPassword').value.trim(),smtpFrom:$('smtpFrom').value.trim()};
+ let ok=false;if(bridge())ok=bridge().saveSettings(JSON.stringify(s));else{localStorage.setItem('settings',JSON.stringify(s));ok=true}toast(ok?'تنظیمات ذخیره شد':'ذخیره نشد');refresh();
+}
+function toggleService(on){if(bridge())bridge().setEnabled(on);statusObj.enabled=on;toast(on?'سرویس روشن شد':'سرویس خاموش شد');refresh();const active=document.querySelector('.screen.active')?.id;if(active==='dashboard')renderDashboard();if(active==='settings')renderSettings();}
 $('nextBtn').onclick=()=>{readStep();if(step<4){step++;renderStep()}else saveRule()};
 $('backBtn').onclick=()=>{readStep();if(step>1){step--;renderStep()}};
-$('fab').onclick=()=>{resetForm();show('wizard')};
-$('goAddFromDash').onclick=()=>{resetForm();show('wizard')};
-$('serviceToggle').onclick=()=>{const on=!$('serviceToggle').classList.contains('on');$('serviceToggle').classList.toggle('on',on);if(bridge())bridge().setEnabled(on);toast(on?'سرویس روشن شد':'سرویس خاموش شد');refresh();renderSettings()};
-$('batteryBtn').onclick=()=>{if(bridge()){bridge().openBatterySettings();toast('در تنظیمات Battery گزینه Unrestricted را انتخاب کن')}else toast('این دکمه داخل اپ اندروید کار می‌کند')};
-$('testSmsBtn').onclick=()=>{if(bridge()){bridge().addTestSms();refresh();toast('SMS تست اضافه شد')}else toast('فقط داخل اپ اندروید فعال است')};
-$('logoBtn').onclick=()=>show('dashboard');
-$('bellBtn').onclick=()=>toast('اعلان جدیدی وجود ندارد');
+$('fab').onclick=()=>{resetForm();show('wizard')}; $('goAddFromDash').onclick=()=>{resetForm();show('wizard')};
+$('dashServiceToggle').onclick=()=>toggleService(!$('dashServiceToggle').classList.contains('on'));
+$('settingsServiceToggle').onclick=()=>toggleService(!$('settingsServiceToggle').classList.contains('on'));
+$('dashBatteryCard').onclick=()=>{if(bridge())bridge().openBatterySettings();else toast('داخل اپ اندروید کار می‌کند')};
+$('batteryBtn').onclick=()=>{if(bridge())bridge().openBatterySettings();else toast('داخل اپ اندروید کار می‌کند')};
+$('saveSettingsBtn').onclick=saveSettings;
+$('testIncomingBtn').onclick=()=>{if(bridge()){bridge().addTestIncomingSms();refresh();toast('SMS تست اضافه شد')}else toast('داخل اپ اندروید کار می‌کند')};
+$('logoBtn').onclick=()=>show('dashboard'); $('bellBtn').onclick=()=>toast('اعلان جدیدی وجود ندارد');
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset.page));
-window.App={refresh:()=>{refresh();const active=document.querySelector('.screen.active')?.id||'dashboard'; if(active==='dashboard')renderDashboard(); if(active==='filters')renderRules(); if(active==='history')renderSms(); if(active==='settings')renderSettings();}};
+window.App={refresh:()=>{refresh();const active=document.querySelector('.screen.active')?.id||'dashboard'; if(active==='dashboard')renderDashboard(); if(active==='filters')renderRules(); if(active==='history')renderMessages(); if(active==='settings')renderSettings();}};
 refresh();renderDashboard();
 </script>
 </body>
