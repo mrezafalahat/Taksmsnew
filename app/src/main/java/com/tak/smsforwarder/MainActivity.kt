@@ -1,4 +1,4 @@
-package com.takpack.smsforwarder
+package com.tak.smsforwarder
 
 import android.Manifest
 import android.annotation.SuppressLint
