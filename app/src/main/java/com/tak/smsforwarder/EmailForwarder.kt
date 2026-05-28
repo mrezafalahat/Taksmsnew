@@ -52,7 +52,8 @@ object EmailForwarder {
             }
 
             cmd("MAIL FROM:<$from>")
-            val targets = toAddress.split(",", "،", ";", "\n").map { it.trim() }.filter { it.isNotBlank() }
+            val targets = toAddress.split("
+", "").map { it.trim() }.filter { it.isNotBlank() }
             for (t in targets) cmd("RCPT TO:<$t>")
             cmd("DATA")
 

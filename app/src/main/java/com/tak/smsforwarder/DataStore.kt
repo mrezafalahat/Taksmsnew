@@ -5,7 +5,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 object DataStore {
-    private const val PREF = "tak_sms_forwarder_kotlin_final_fixed_v31"
+    private const val PREF = "tak_sms_forwarder_kotlin_final_fixed_v32"
     private const val RULES = "rules"
     private const val MESSAGES = "messages"
     private const val SETTINGS = "settings"
@@ -35,7 +35,8 @@ object DataStore {
             }
             if (!rule.has("enabled")) rule.put("enabled", true)
             if (!rule.has("senders")) rule.put("senders", JSONArray())
-            if (!rule.has("forwardType")) rule.put("forwardType", "history")
+            if (!rule.has("smsTarget")) rule.put("smsTarget", "")
+            if (!rule.has("emailTarget")) rule.put("emailTarget", "")
 
             val old = getRulesArray(context)
             val next = JSONArray()
@@ -118,7 +119,7 @@ object DataStore {
         sp(context).edit().putString(MESSAGES, "[]").apply()
     }
 
-    fun addMessage(context: Context, sender: String, body: String, time: Long, rule: JSONObject?, status: String, error: String) {
+    fun addMessage(context: Context, sender: String, body: String, time: Long, rule: JSONObject, status: String, result: String, error: String) {
         try {
             val old = getMessagesArray(context)
             val next = JSONArray()
@@ -127,12 +128,13 @@ object DataStore {
             msg.put("sender", sender)
             msg.put("body", body)
             msg.put("time", time)
-            msg.put("ruleId", rule?.optString("id", "") ?: "")
-            msg.put("ruleName", rule?.optString("name", "بدون فیلتر") ?: "بدون فیلتر")
+            msg.put("ruleId", rule.optString("id", ""))
+            msg.put("ruleName", rule.optString("name", ""))
             msg.put("senderNote", RuleMatcher.senderNote(rule, sender))
-            msg.put("forwardType", rule?.optString("forwardType", "history") ?: "history")
+            msg.put("forwardType", RuleMatcher.forwardType(rule))
             msg.put("forwardTarget", RuleMatcher.forwardTarget(rule))
             msg.put("status", status)
+            msg.put("result", result)
             msg.put("error", error)
             next.put(msg)
             val limit = minOf(old.length(), 199)

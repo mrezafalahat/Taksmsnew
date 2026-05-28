@@ -6,7 +6,7 @@ import android.telephony.SmsManager
 object SmsForwarder {
     fun send(context: Context, target: String, message: String): Pair<Boolean, String> {
         return try {
-            val numbers = target.split(",", "،", "\n", ";").map { it.trim() }.filter { it.isNotBlank() }
+            val numbers = target.split("\n", "\r").map { it.trim() }.filter { it.isNotBlank() }
             if (numbers.isEmpty()) return false to "شماره مقصد SMS خالی است"
 
             val smsManager = if (android.os.Build.VERSION.SDK_INT >= 23) {

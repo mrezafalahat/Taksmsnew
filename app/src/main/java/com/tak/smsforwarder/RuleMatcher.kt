@@ -62,12 +62,23 @@ object RuleMatcher {
         return ""
     }
 
-    fun forwardTarget(rule: JSONObject?): String {
-        if (rule == null) return ""
-        return when (rule.optString("forwardType", "history")) {
-            "sms" -> rule.optString("smsTarget", "")
-            "email" -> rule.optString("emailTarget", "")
+    fun forwardType(rule: JSONObject): String {
+        val hasSms = rule.optString("smsTarget", "").trim().isNotEmpty()
+        val hasEmail = rule.optString("emailTarget", "").trim().isNotEmpty()
+        return when {
+            hasSms && hasEmail -> "SMS + Email"
+            hasSms -> "SMS"
+            hasEmail -> "Email"
             else -> "History"
         }
+    }
+
+    fun forwardTarget(rule: JSONObject): String {
+        val sms = rule.optString("smsTarget", "").trim()
+        val email = rule.optString("emailTarget", "").trim()
+        val parts = mutableListOf<String>()
+        if (sms.isNotEmpty()) parts.add(sms)
+        if (email.isNotEmpty()) parts.add(email)
+        return if (parts.isEmpty()) "History" else parts.joinToString("\n")
     }
 }

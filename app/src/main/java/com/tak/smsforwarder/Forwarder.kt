@@ -1,48 +1,57 @@
 package com.takpack.smsforwarder
 
 import android.content.Context
-import org.json.JSONObject
 
 object Forwarder {
     fun processIncomingSms(context: Context, sender: String, body: String, time: Long) {
         val rule = RuleMatcher.match(context, sender, body)
 
-        if (rule == null) {
-            DataStore.addMessage(context, sender, body, time, null, "ذخیره شد", "")
+        // پیام‌های بدون فیلتر نباید در History / پیام‌ها لاگ شوند.
+        if (rule == null) return
+
+        val smsTarget = rule.optString("smsTarget", "").trim()
+        val emailTarget = rule.optString("emailTarget", "").trim()
+
+        var okCount = 0
+        var errorCount = 0
+        val results = mutableListOf<String>()
+        val errors = mutableListOf<String>()
+
+        if (smsTarget.isNotEmpty()) {
+            val result = SmsForwarder.send(context, smsTarget, body)
+            if (result.first) okCount++ else errorCount++
+            if (result.first) results.add(result.second) else errors.add(result.second)
+        }
+
+        if (emailTarget.isNotEmpty()) {
+            Thread {
+                val emailResult = EmailForwarder.send(context, emailTarget, "Forwarded SMS", body)
+                val status = if (emailResult.first) {
+                    if (smsTarget.isNotEmpty() && errorCount > 0) "ارسال ناقص" else "ارسال موفق"
+                } else {
+                    if (smsTarget.isNotEmpty() && okCount > 0) "ارسال ناقص" else "خطای ارسال"
+                }
+                DataStore.addMessage(
+                    context,
+                    sender,
+                    body,
+                    time,
+                    rule,
+                    status,
+                    (results + if (emailResult.first) emailResult.second else emptyList()).joinToString(" | "),
+                    (errors + if (!emailResult.first) emailResult.second else emptyList()).joinToString(" | ")
+                )
+            }.start()
             return
         }
 
-        val type = rule.optString("forwardType", "history")
-        val message = buildForwardText(sender, body, rule)
-
-        when (type) {
-            "sms" -> {
-                val target = rule.optString("smsTarget", "")
-                val result = SmsForwarder.send(context, target, message)
-                DataStore.addMessage(context, sender, body, time, rule, if (result.first) "ارسال SMS موفق" else "خطای SMS", result.second)
-            }
-            "email" -> {
-                val target = rule.optString("emailTarget", "")
-                Thread {
-                    val result = EmailForwarder.send(context, target, "Forwarded SMS - ${rule.optString("name", "")}", message)
-                    DataStore.addMessage(context, sender, body, time, rule, if (result.first) "ارسال Email موفق" else "خطای Email", result.second)
-                }.start()
-            }
-            else -> {
-                DataStore.addMessage(context, sender, body, time, rule, "فقط ذخیره شد", "")
-            }
+        val status = when {
+            smsTarget.isEmpty() && emailTarget.isEmpty() -> "ذخیره شد"
+            errorCount > 0 && okCount == 0 -> "خطای ارسال"
+            errorCount > 0 && okCount > 0 -> "ارسال ناقص"
+            else -> "ارسال موفق"
         }
-    }
 
-    fun buildForwardText(sender: String, body: String, rule: JSONObject): String {
-        return """
-            SMS Forwarded
-
-            Rule: ${rule.optString("name", "بدون نام")}
-            Sender: $sender
-
-            Message:
-            $body
-        """.trimIndent()
+        DataStore.addMessage(context, sender, body, time, rule, status, results.joinToString(" | "), errors.joinToString(" | "))
     }
 }
