@@ -2,12 +2,12 @@ package com.tak.smsforwarder
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.os.Bundle
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.activity.ComponentActivity
 
-class MainActivity : ComponentActivity() {
+class MainActivity : Activity() {
 
     private lateinit var webView: WebView
 
@@ -28,6 +28,7 @@ class MainActivity : ComponentActivity() {
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
         webView.webViewClient = WebViewClient()
+
         webView.addJavascriptInterface(SmsBridge(this), "TakBridge")
         webView.loadUrl("file:///android_asset/index.html")
 
