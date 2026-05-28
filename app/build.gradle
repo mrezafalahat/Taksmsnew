@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.takpack.smsforwarder'
+    namespace 'com.tak.smsforwarder'
     compileSdk 35
 
     defaultConfig {
-        applicationId 'com.takpack.smsforwarder'
+        applicationId 'com.tak.smsforwarder'
         minSdk 23
         targetSdk 35
         versionCode 22
