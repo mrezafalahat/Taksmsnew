@@ -1,4 +1,4 @@
-package com.takpack.smsforwarder
+package com.tak.smsforwarder
 
 import android.content.Context
 import org.json.JSONArray
