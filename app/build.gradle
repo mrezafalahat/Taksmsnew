@@ -1,21 +1,14 @@
-plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
-}
+plugins { id 'com.android.application' }
 
 android {
-    namespace 'com.tak.smsforwarder'
+    namespace 'com.takpack.smsforwarder'
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.tak.smsforwarder"
+        applicationId 'com.takpack.smsforwarder'
         minSdk 23
         targetSdk 35
-        versionCode 12
-        versionName "2.2-webview"
+        versionCode 7
+        versionName '1.6-fixed-ui'
     }
-}
-
-kotlin {
-    jvmToolchain(17)
 }
