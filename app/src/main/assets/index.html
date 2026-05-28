@@ -1,13 +1,693 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TAK SMS</title>
-  <link rel="stylesheet" href="style.css"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>TAK SMS Forwarder</title>
+  <style>
+    :root{
+      --bg:#f7f8fc;
+      --page:#ffffff;
+      --card:#ffffff;
+      --card2:#f5f7fc;
+      --text:#10172a;
+      --muted:#78829a;
+      --line:#e8ebf3;
+      --blue:#2563eb;
+      --blue2:#38bdf8;
+      --violet:#6d5dfc;
+      --violet2:#8b5cf6;
+      --green:#18a66a;
+      --red:#ef4444;
+      --orange:#f59e0b;
+      --shadow:0 12px 32px rgba(15,23,42,.08);
+      --shadow2:0 20px 50px rgba(15,23,42,.12);
+      --radius:22px;
+      --radius2:18px;
+    }
+
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:Tahoma, Arial, sans-serif;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(109,93,252,.14), transparent 28%),
+        radial-gradient(circle at 90% 12%, rgba(37,99,235,.10), transparent 24%),
+        var(--bg);
+      color:var(--text);
+      overflow-x:hidden;
+    }
+
+    .app-shell{
+      width:100%;
+      max-width:430px;
+      min-height:100vh;
+      margin:auto;
+      background:linear-gradient(180deg,#fff 0%,#fbfcff 55%,#f7f8fc 100%);
+      position:relative;
+      overflow:hidden;
+      box-shadow:0 0 0 1px rgba(15,23,42,.04);
+    }
+
+    .statusbar{
+      height:30px;
+      padding:8px 18px 0;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:11px;
+      direction:ltr;
+      color:#0f172a;
+      opacity:.9;
+    }
+
+    .topbar{
+      height:58px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 18px;
+    }
+
+    .page-title{
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:-.3px;
+    }
+
+    .icon-btn{
+      width:38px;
+      height:38px;
+      border:0;
+      background:transparent;
+      border-radius:14px;
+      color:#26324b;
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+    }
+
+    .icon-btn svg{width:21px;height:21px;stroke-width:2}
+
+    .content{
+      height:calc(100vh - 88px);
+      overflow-y:auto;
+      padding:0 16px 100px;
+      scroll-behavior:smooth;
+    }
+
+    .content::-webkit-scrollbar{width:0}
+
+    .screen{display:none;animation:fadeUp .28s ease both}
+    .screen.active{display:block}
+
+    @keyframes fadeUp{
+      from{opacity:0;transform:translateY(12px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+    .card{
+      background:rgba(255,255,255,.94);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+
+    .stat{
+      min-height:104px;
+      padding:15px;
+      overflow:hidden;
+      position:relative;
+    }
+    .stat::after{
+      content:"";
+      position:absolute;
+      width:94px;height:94px;border-radius:50%;
+      left:-34px;top:-38px;
+      background:rgba(255,255,255,.14);
+    }
+    .stat.primary{
+      border:0;
+      color:white;
+      background:linear-gradient(135deg,var(--violet),var(--blue));
+      box-shadow:0 18px 38px rgba(109,93,252,.24);
+    }
+    .stat.light{
+      background:linear-gradient(145deg,#fff,#f1f5ff);
+    }
+    .stat-label{font-size:12px;color:inherit;opacity:.78;font-weight:800}
+    .stat-num{font-size:30px;font-weight:900;margin-top:9px;letter-spacing:-.8px}
+    .stat-hint{font-size:10.5px;margin-top:5px;opacity:.72}
+    .stat.light .stat-label{color:#566178}.stat.light .stat-hint{color:#8790a4}.stat.light .stat-num{color:#3153d4}
+
+    .mini-stat{
+      padding:13px 8px;
+      text-align:center;
+      min-height:82px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+    }
+    .mini-stat .n{font-size:23px;font-weight:900;color:var(--violet)}
+    .mini-stat .l{font-size:11px;font-weight:800;color:#626b80;margin-top:4px}
+
+    .section-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin:18px 2px 10px;
+    }
+    .section-head h3{margin:0;font-size:14px;font-weight:900}
+    .link{font-size:11px;color:var(--violet);font-weight:900}
+
+    .chart-card{padding:14px;margin-top:12px}
+    .chart-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .pill{
+      height:30px;
+      border:1px solid var(--line);
+      background:#f7f8fc;
+      border-radius:999px;
+      padding:0 12px;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:11px;
+      font-weight:800;
+      color:#526079;
+      white-space:nowrap;
+    }
+    .pill.active{
+      color:#fff;
+      border-color:transparent;
+      background:linear-gradient(135deg,var(--violet),var(--blue));
+      box-shadow:0 8px 20px rgba(109,93,252,.22);
+    }
+    .chart-svg{width:100%;height:140px;display:block;overflow:visible}
+
+    .list{display:flex;flex-direction:column;gap:10px}
+    .row{
+      min-height:68px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:12px;
+      background:rgba(255,255,255,.96);
+      border:1px solid var(--line);
+      border-radius:19px;
+      box-shadow:0 8px 22px rgba(15,23,42,.055);
+    }
+    .avatar{
+      width:44px;height:44px;border-radius:16px;
+      display:grid;place-items:center;
+      color:white;font-weight:900;
+      flex:0 0 auto;
+      box-shadow:0 8px 18px rgba(37,99,235,.16);
+    }
+    .blue{background:linear-gradient(135deg,#0ea5e9,#2563eb)}
+    .violet{background:linear-gradient(135deg,#8b5cf6,#4f46e5)}
+    .red{background:linear-gradient(135deg,#ef4444,#dc2626)}
+    .green{background:linear-gradient(135deg,#22c55e,#16a34a)}
+    .orange{background:linear-gradient(135deg,#f59e0b,#fb923c)}
+    .gray{background:linear-gradient(135deg,#94a3b8,#64748b)}
+
+    .row-body{flex:1;min-width:0}
+    .row-title{font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .row-sub{font-size:10.8px;color:var(--muted);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .row-side{display:flex;flex-direction:column;align-items:flex-start;gap:7px}
+    .time{font-size:10px;color:#7a8295;white-space:nowrap}
+    .tag{
+      height:24px;padding:0 9px;border-radius:999px;
+      display:inline-flex;align-items:center;justify-content:center;
+      font-size:10px;font-weight:900;white-space:nowrap;
+    }
+    .tag.green{background:#e9faf2;color:#12915e}
+    .tag.blue{background:#eef5ff;color:#2563eb}
+    .tag.violet{background:#f1efff;color:#6d5dfc}
+    .tag.orange{background:#fff6e8;color:#c97806}
+    .tag.red{background:#fff0f0;color:#dc2626}
+
+    .search{
+      height:46px;
+      border:1px solid var(--line);
+      background:#f5f7fb;
+      border-radius:18px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:0 14px;
+      color:#8b93a7;
+      font-size:12px;
+      margin-bottom:12px;
+    }
+    .search svg{width:18px;height:18px}
+    .chips{
+      display:flex;
+      gap:8px;
+      overflow-x:auto;
+      padding-bottom:10px;
+      margin-bottom:2px;
+      direction:rtl;
+    }
+    .chips::-webkit-scrollbar{height:0}
+    .chip{
+      height:32px;
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:999px;
+      padding:0 14px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:11px;
+      font-weight:900;
+      color:#4b556b;
+      white-space:nowrap;
+      flex:0 0 auto;
+    }
+    .chip.active{
+      color:white;
+      border-color:transparent;
+      background:linear-gradient(135deg,var(--violet),var(--blue));
+    }
+
+    .toggle{
+      width:42px;height:24px;border-radius:999px;background:#cbd5e1;position:relative;flex:0 0 auto;
+      transition:.25s;
+    }
+    .toggle::after{
+      content:"";width:18px;height:18px;background:white;border-radius:50%;position:absolute;top:3px;right:3px;
+      box-shadow:0 2px 6px rgba(15,23,42,.22);transition:.25s;
+    }
+    .toggle.on{background:linear-gradient(135deg,var(--violet),var(--blue))}
+    .toggle.on::after{right:21px}
+
+    .rule-card{
+      padding:14px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .rule-icon{
+      width:48px;height:48px;border-radius:18px;background:#f1f5ff;
+      display:grid;place-items:center;color:var(--blue);flex:0 0 auto;
+    }
+    .rule-icon svg{width:23px;height:23px}
+    .rule-text{flex:1;min-width:0}
+    .rule-title{font-size:13px;font-weight:900}
+    .rule-sub{font-size:10.5px;color:var(--muted);margin-top:5px;line-height:1.7}
+
+    .settings-group{margin-bottom:16px}
+    .group-title{font-size:12px;font-weight:900;color:#6b7280;margin:0 4px 9px}
+    .setting-row{
+      min-height:56px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:10px 12px;
+      border-bottom:1px solid #edf0f6;
+    }
+    .setting-row:last-child{border-bottom:0}
+    .setting-icon{width:34px;height:34px;border-radius:13px;background:#f1f5ff;color:var(--violet);display:grid;place-items:center;flex:0 0 auto}
+    .setting-icon svg{width:18px;height:18px}
+    .setting-main{flex:1;min-width:0}
+    .setting-title{font-size:12.5px;font-weight:900}
+    .setting-sub{font-size:10.2px;color:var(--muted);margin-top:4px}
+    .value{font-size:11px;color:#566178;font-weight:800}
+
+    .detail-head{
+      padding:16px;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      margin-bottom:12px;
+      background:linear-gradient(135deg,var(--violet),var(--blue));
+      color:white;
+      border:0;
+      box-shadow:0 18px 38px rgba(109,93,252,.23);
+    }
+    .detail-head .avatar{box-shadow:none;background:rgba(255,255,255,.18)}
+    .detail-title{font-size:16px;font-weight:900}
+    .detail-sub{font-size:11px;opacity:.78;margin-top:5px;direction:ltr;text-align:right}
+    .info-card{padding:4px 12px;margin-bottom:12px}
+    .info-line{
+      min-height:42px;display:flex;align-items:center;justify-content:space-between;
+      border-bottom:1px solid #edf0f6;font-size:12px;
+    }
+    .info-line:last-child{border-bottom:0}
+    .info-label{color:#6b7280;font-weight:800}
+    .info-value{font-weight:900}
+    .message-body{padding:16px;line-height:2;font-size:13px;color:#202942}
+    .action-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-top:12px}
+    .action{
+      height:44px;border:1px solid var(--line);background:#fff;border-radius:16px;
+      font-size:11px;font-weight:900;color:var(--blue);display:flex;align-items:center;justify-content:center;gap:7px;
+    }
+    .action.danger{color:var(--red);border-color:#ffd8d8;background:#fffafa}
+
+    .contact-row .avatar{width:42px;height:42px}
+    .star{font-size:19px;color:#fbbf24;line-height:1}
+    .star.off{color:#cbd5e1}
+    .contact-actions{display:flex;align-items:center;gap:8px}
+    .mini-round{
+      width:32px;height:32px;border-radius:12px;background:#f1f5ff;color:var(--blue);
+      display:grid;place-items:center;
+    }
+    .mini-round svg{width:17px;height:17px}
+
+    .fab{
+      position:absolute;
+      left:22px;
+      bottom:78px;
+      width:56px;
+      height:56px;
+      border-radius:22px;
+      border:0;
+      color:white;
+      background:linear-gradient(135deg,var(--violet),var(--blue));
+      box-shadow:0 18px 38px rgba(109,93,252,.35);
+      display:grid;
+      place-items:center;
+      z-index:20;
+      cursor:pointer;
+      transition:.2s;
+    }
+    .fab:active{transform:scale(.94)}
+    .fab svg{width:25px;height:25px}
+
+    .bottom-nav{
+      position:absolute;
+      bottom:0;
+      left:0;
+      right:0;
+      height:76px;
+      background:rgba(255,255,255,.92);
+      backdrop-filter:blur(18px);
+      border-top:1px solid rgba(226,232,240,.82);
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      padding:8px 8px 10px;
+      z-index:18;
+    }
+    .nav-item{
+      border:0;background:transparent;border-radius:17px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+      color:#8b93a7;font-size:10px;font-weight:900;cursor:pointer;
+    }
+    .nav-item svg{width:21px;height:21px;stroke-width:2}
+    .nav-item.active{
+      color:var(--violet);
+      background:#f2f0ff;
+    }
+
+    .toast{
+      position:absolute;
+      left:18px;
+      right:18px;
+      bottom:90px;
+      min-height:46px;
+      background:#10172a;
+      color:white;
+      border-radius:18px;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:10px 14px;
+      font-size:12px;
+      z-index:40;
+      box-shadow:var(--shadow2);
+      animation:fadeUp .25s ease both;
+    }
+
+    @media (min-width:900px){
+      body{padding:24px}
+      .app-shell{
+        border-radius:34px;
+        min-height:860px;
+        height:860px;
+        box-shadow:0 30px 90px rgba(15,23,42,.18);
+      }
+      .content{height:calc(860px - 88px)}
+    }
+
+    @media (max-width:430px){
+      .app-shell{max-width:none}
+    }
+  </style>
 </head>
 <body>
-  <main id="app"></main>
-  <script src="app.js"></script>
+  <main class="app-shell">
+    <div class="statusbar">
+      <span>12:30</span>
+      <span>●  LTE  ▰</span>
+    </div>
+
+    <header class="topbar">
+      <button class="icon-btn" onclick="showToast('اعلان‌ها')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+      <div class="page-title" id="pageTitle">داشبورد</div>
+      <button class="icon-btn" onclick="showToast('منوی اصلی')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </header>
+
+    <section class="content">
+      <div class="screen active" id="dashboard">
+        <div class="grid2">
+          <div class="card stat primary">
+            <div class="stat-label">پیامک‌های امروز</div>
+            <div class="stat-num">۱۲۸</div>
+            <div class="stat-hint">۱۸٪ بیشتر از دیروز</div>
+          </div>
+          <div class="card stat light">
+            <div class="stat-label">فوروارد شده</div>
+            <div class="stat-num">۹۷</div>
+            <div class="stat-hint">۲۲٪ بیشتر از دیروز</div>
+          </div>
+        </div>
+
+        <div class="grid3" style="margin-top:12px">
+          <div class="card mini-stat"><div class="n">۱۲</div><div class="l">قوانین فعال</div></div>
+          <div class="card mini-stat"><div class="n">۳۶</div><div class="l">مخاطبین</div></div>
+          <div class="card mini-stat"><div class="n">۲</div><div class="l">SIM فعال</div></div>
+        </div>
+
+        <div class="card chart-card">
+          <div class="chart-top">
+            <b style="font-size:13px">نمودار فعالیت هفتگی</b>
+            <span class="pill">هفته گذشته</span>
+          </div>
+          <svg class="chart-svg" viewBox="0 0 320 140">
+            <defs>
+              <linearGradient id="g1" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#6d5dfc" stop-opacity=".28"/>
+                <stop offset="100%" stop-color="#6d5dfc" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path d="M12 112H308" stroke="#edf0f6"/><path d="M12 84H308" stroke="#edf0f6"/><path d="M12 56H308" stroke="#edf0f6"/><path d="M12 28H308" stroke="#edf0f6"/>
+            <path d="M18 98 L65 82 L110 96 L155 58 L200 88 L246 60 L302 74" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M18 98 L65 82 L110 96 L155 58 L200 88 L246 60 L302 74 L302 122 L18 122 Z" fill="url(#g1)"/>
+            <g fill="#2563eb">
+              <circle cx="18" cy="98" r="4"/><circle cx="65" cy="82" r="4"/><circle cx="110" cy="96" r="4"/><circle cx="155" cy="58" r="4"/><circle cx="200" cy="88" r="4"/><circle cx="246" cy="60" r="4"/><circle cx="302" cy="74" r="4"/>
+            </g>
+            <g fill="#8b93a7" font-size="9" text-anchor="middle">
+              <text x="18" y="136">شنبه</text><text x="65" y="136">یکشنبه</text><text x="110" y="136">دوشنبه</text><text x="155" y="136">سه‌شنبه</text><text x="200" y="136">چهارشنبه</text><text x="246" y="136">پنجشنبه</text><text x="302" y="136">جمعه</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="section-head">
+          <h3>فعالیت‌های اخیر</h3>
+          <span class="link">مشاهده همه</span>
+        </div>
+        <div class="list">
+          <div class="row">
+            <div class="avatar red">م</div>
+            <div class="row-body">
+              <div class="row-title">پیامک از بانک ملت</div>
+              <div class="row-sub">کد تایید شما با موفقیت فوروارد شد.</div>
+            </div>
+            <div class="row-side"><span class="time">۱۱:۴۵</span><span class="tag green">فوروارد شد</span></div>
+          </div>
+          <div class="row">
+            <div class="avatar green">۱</div>
+            <div class="row-body">
+              <div class="row-title">همراه اول</div>
+              <div class="row-sub">بسته اینترنتی فعال شد.</div>
+            </div>
+            <div class="row-side"><span class="time">۱۰:۳۲</span><span class="tag blue">تحویل داده شد</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" id="messages">
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          جستجو در پیامک‌ها
+        </div>
+        <div class="chips">
+          <span class="chip active">همه</span><span class="chip">بانک‌ها</span><span class="chip">فوروارد شده</span><span class="chip">خوانده نشده</span><span class="chip">تبلیغاتی</span>
+        </div>
+        <div class="list">
+          <div class="row" onclick="go('detail')"><div class="avatar red">م</div><div class="row-body"><div class="row-title">بانک ملت</div><div class="row-sub">کد تایید شما ۹۸۷۶۵ است. لطفاً این کد را...</div></div><div class="row-side"><span class="time">۱۱:۴۵</span><span class="tag green">فوروارد شد</span></div></div>
+          <div class="row"><div class="avatar green">۱</div><div class="row-body"><div class="row-title">همراه اول</div><div class="row-sub">بسته اینترنتی شما با موفقیت فعال شد.</div></div><div class="row-side"><span class="time">۱۰:۳۲</span><span class="tag blue">تحویل داده شد</span></div></div>
+          <div class="row"><div class="avatar red">د</div><div class="row-body"><div class="row-title">دیجی‌کالا</div><div class="row-sub">سفارش شما با شماره ۱۲۳۴۵۶ ثبت شد.</div></div><div class="row-side"><span class="time">دیروز</span><span class="tag green">فوروارد شد</span></div></div>
+          <div class="row"><div class="avatar violet">ب</div><div class="row-body"><div class="row-title">بانک ملی</div><div class="row-sub">تراکنش کارت به مبلغ ۵۰۰,۰۰۰ ریال انجام شد.</div></div><div class="row-side"><span class="time">دیروز</span><span class="tag violet">خوانده نشده</span></div></div>
+          <div class="row"><div class="avatar green">!</div><div class="row-body"><div class="row-title">اسنپ</div><div class="row-sub">کد تایید اسنپ: ۴۵۶۷ - این کد را با کسی...</div></div><div class="row-side"><span class="time">۲ روز پیش</span><span class="tag green">فوروارد شد</span></div></div>
+        </div>
+      </div>
+
+      <div class="screen" id="rules">
+        <div class="card rule-card" style="margin-bottom:12px">
+          <div class="rule-icon"><b style="font-size:24px">۱۲</b></div>
+          <div class="rule-text"><div class="rule-title">فعال‌سازی خودکار</div><div class="rule-sub">پیامک‌های ورودی بر اساس قوانین فیلتر می‌شوند.</div></div>
+          <div class="toggle on"></div>
+        </div>
+        <div class="list">
+          <div class="card rule-card"><div class="rule-icon">🏦</div><div class="rule-text"><div class="rule-title">پیامک‌های بانکی</div><div class="rule-sub">شامل کلمات: بانک، کارت، تراکنش<br>فوروارد به: تلگرام - مالی</div></div><div class="toggle on"></div></div>
+          <div class="card rule-card"><div class="rule-icon">🛡</div><div class="rule-text"><div class="rule-title">کدهای تایید OTP</div><div class="rule-sub">شامل کلمات: کد تایید، رمز یکبار مصرف<br>فوروارد به: تلگرام - کدها</div></div><div class="toggle on"></div></div>
+          <div class="card rule-card"><div class="rule-icon">🏷</div><div class="rule-text"><div class="rule-title">تبلیغات</div><div class="rule-sub">شامل کلمات: تخفیف، فروش، ویژه<br>فوروارد به: تلگرام - تبلیغات</div></div><div class="toggle on"></div></div>
+          <div class="card rule-card"><div class="rule-icon">⚙</div><div class="rule-text"><div class="rule-title">پیامک‌های سیستمی</div><div class="rule-sub">شامل کلمات: همراه اول، ایرانسل، رایتل<br>فوروارد به: تلگرام - سیستم</div></div><div class="toggle"></div></div>
+        </div>
+      </div>
+
+      <div class="screen" id="settings">
+        <div class="settings-group">
+          <div class="group-title">عمومی</div>
+          <div class="card">
+            <div class="setting-row"><div class="setting-icon">▶</div><div class="setting-main"><div class="setting-title">فعال‌سازی سرویس</div><div class="setting-sub">روشن / خاموش کردن سرویس فوروارد پیامک</div></div><div class="toggle on"></div></div>
+            <div class="setting-row"><div class="setting-icon">⚡</div><div class="setting-main"><div class="setting-title">اجرای خودکار در شروع</div><div class="setting-sub">اجرای سرویس هنگام بوت دستگاه</div></div><div class="toggle on"></div></div>
+            <div class="setting-row"><div class="setting-icon">ز</div><div class="setting-main"><div class="setting-title">زبان برنامه</div></div><div class="value">فارسی</div></div>
+            <div class="setting-row"><div class="setting-icon">☼</div><div class="setting-main"><div class="setting-title">تم برنامه</div></div><div class="value">روشن</div></div>
+          </div>
+        </div>
+        <div class="settings-group">
+          <div class="group-title">تنظیمات فوروارد</div>
+          <div class="card">
+            <div class="setting-row"><div class="setting-icon">✈</div><div class="setting-main"><div class="setting-title">روش فوروارد</div><div class="setting-sub">فوروارد از طریق تلگرام</div></div><div class="value">تلگرام</div></div>
+            <div class="setting-row"><div class="setting-icon">◷</div><div class="setting-main"><div class="setting-title">تاخیر فوروارد</div></div><div class="value">بدون تاخیر</div></div>
+            <div class="setting-row"><div class="setting-icon">☁</div><div class="setting-main"><div class="setting-title">گزارش تحویل</div><div class="setting-sub">دریافت گزارش از پیام‌های فوروارد شده</div></div><div class="toggle on"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" id="detail">
+        <div class="card detail-head">
+          <div class="avatar">م</div>
+          <div class="row-body">
+            <div class="detail-title">بانک ملت</div>
+            <div class="detail-sub">+98 300 123 45 67</div>
+          </div>
+        </div>
+        <div class="card info-card">
+          <div class="info-line"><span class="info-label">زمان دریافت</span><span class="info-value">۱۴۰۴/۰۲/۲۳ - ۱۱:۴۵</span></div>
+          <div class="info-line"><span class="info-label">SIM منبع</span><span class="info-value">SIM 1 - همراه اول</span></div>
+          <div class="info-line"><span class="info-label">قانون منطبق</span><span class="info-value">پیامک‌های بانکی</span></div>
+          <div class="info-line"><span class="info-label">وضعیت</span><span class="tag green">فوروارد شد</span></div>
+        </div>
+        <div class="section-head"><h3>محتوای پیام</h3></div>
+        <div class="card message-body">
+          مشتری گرامی،<br>
+          تراکنش کارت به مبلغ ۵۰۰,۰۰۰ ریال در تاریخ ۱۴۰۴/۰۲/۲۳ ساعت ۱۱:۴۵ با موفقیت انجام شد.<br>
+          کد پیگیری: ۳۳۱۲۴۵۶۷۸۹<br>
+          بانک ملت
+        </div>
+        <div class="action-row">
+          <button class="action" onclick="showToast('متن کپی شد')">کپی متن</button>
+          <button class="action" onclick="showToast('فوروارد دستی انجام شد')">فوروارد دستی</button>
+          <button class="action danger" onclick="showToast('پیام حذف شد')">حذف</button>
+        </div>
+      </div>
+
+      <div class="screen" id="contacts">
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          جستجو در مخاطبین
+        </div>
+        <div class="chips">
+          <span class="chip active">همه</span><span class="chip">تلگرام</span><span class="chip">ایتا</span><span class="chip">سروش</span><span class="chip">مهم</span>
+        </div>
+        <div class="list">
+          <div class="row contact-row"><div class="avatar blue">✈</div><div class="row-body"><div class="row-title">مالی</div><div class="row-sub">@mali_channel · تلگرام</div></div><div class="contact-actions"><span class="star">★</span></div></div>
+          <div class="row contact-row"><div class="avatar violet">✓</div><div class="row-body"><div class="row-title">کدهای تایید</div><div class="row-sub">@otp_codes · تلگرام</div></div><div class="contact-actions"><span class="star off">★</span></div></div>
+          <div class="row contact-row"><div class="avatar orange">📣</div><div class="row-body"><div class="row-title">تبلیغات</div><div class="row-sub">@ads_channel · تلگرام</div></div><div class="contact-actions"><span class="star">★</span></div></div>
+          <div class="row contact-row"><div class="avatar gray">⚙</div><div class="row-body"><div class="row-title">سیستم</div><div class="row-sub">@system_alerts · تلگرام</div></div><div class="contact-actions"><span class="star off">★</span></div></div>
+          <div class="row contact-row"><div class="avatar green">☏</div><div class="row-body"><div class="row-title">پشتیبانی</div><div class="row-sub">@support_bot · تلگرام</div></div><div class="contact-actions"><span class="star off">★</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <button class="fab" id="fab" onclick="showToast('افزودن آیتم جدید')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+
+    <nav class="bottom-nav">
+      <button class="nav-item" data-page="settings" data-title="تنظیمات" onclick="go('settings')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.38 1.05V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1A1.65 1.65 0 0 0 3 13.62H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 1 1 7.04 4.3l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6A1.65 1.65 0 0 0 10.38 3V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.37.36.7.65 1 .3.29.63.51 1 .65H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51.35Z"/></svg>
+        تنظیمات
+      </button>
+      <button class="nav-item" data-page="contacts" data-title="مخاطبین" onclick="go('contacts')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        مخاطبین
+      </button>
+      <button class="nav-item" data-page="rules" data-title="قوانین فیلتر" onclick="go('rules')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 4h18l-7 8v6l-4 2v-8L3 4Z"/></svg>
+        قوانین
+      </button>
+      <button class="nav-item" data-page="messages" data-title="پیامک‌ها" onclick="go('messages')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>
+        پیامک‌ها
+      </button>
+      <button class="nav-item active" data-page="dashboard" data-title="داشبورد" onclick="go('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>
+        داشبورد
+      </button>
+    </nav>
+
+    <div class="toast" id="toast">انجام شد</div>
+  </main>
+
+  <script>
+    const titles = {
+      dashboard:'داشبورد',
+      messages:'پیامک‌ها',
+      rules:'قوانین فیلتر',
+      settings:'تنظیمات',
+      detail:'جزئیات پیام',
+      contacts:'مخاطبین'
+    };
+
+    function go(page){
+      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+      document.getElementById(page).classList.add('active');
+      document.getElementById('pageTitle').textContent = titles[page] || 'داشبورد';
+
+      document.querySelectorAll('.nav-item').forEach(n=>{
+        n.classList.toggle('active', n.dataset.page === page);
+      });
+
+      const fab = document.getElementById('fab');
+      fab.style.display = ['messages','rules','contacts'].includes(page) ? 'grid' : 'none';
+
+      document.querySelector('.content').scrollTop = 0;
+    }
+
+    let toastTimer;
+    function showToast(text){
+      const t = document.getElementById('toast');
+      t.textContent = text;
+      t.style.display = 'flex';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=> t.style.display='none', 1700);
+    }
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      document.getElementById('fab').style.display='none';
+    });
+  </script>
 </body>
 </html>
