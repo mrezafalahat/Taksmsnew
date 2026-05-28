@@ -1,25 +1,27 @@
-# TAK SMS Forwarder COMPLETE CONNECTED
+# TAK SMS Forwarder - Kotlin SMS + Email
 
-نسخه کامل متصل:
-- UI اصلاح‌شده و سالم
-- Dashboard
-- Filters
-- Add Filter Wizard
-- History
-- Settings
-- اتصال کامل WebView به AndroidBridge
-- دریافت SMS واقعی با BroadcastReceiver
-- ذخیره فیلترها در SharedPreferences
-- ذخیره SMSها در SharedPreferences
-- کارت جدا برای هر شماره + توضیح شماره
-- دکمه Battery متصل به تنظیمات واقعی Android
-- مجوز SMS ابتدای اجرای برنامه
-- دکمه لوگو و زنگ فعال
-- FAB درست بالای منوی پایین
+نسخه کامل Kotlin برای جایگزینی:
 
-نصب:
-1. ZIP را Extract کن.
-2. پوشه TakSmsForwarder_COMPLETE_CONNECTED را با Android Studio باز کن.
-3. Gradle Sync.
-4. روی گوشی واقعی Run بگیر.
-5. اول برنامه مجوز SMS را بده.
+- Java حذف شده؛ همه کلاس‌ها Kotlin هستند.
+- MainActivity.kt
+- SmsReceiver.kt
+- DataStore.kt
+- RuleMatcher.kt
+- SmsForwarder.kt
+- EmailForwarder.kt
+- Forwarder.kt
+- WebView UI در assets/index.html
+
+قابلیت‌ها:
+- دریافت SMS واقعی
+- فوروارد به SMS
+- فوروارد به Email با SMTP SSL پورت 465
+- فقط ذخیره در History
+- ویرایش/حذف/فعال‌غیرفعال فیلتر
+- کارت جدا برای هر شماره + توضیح
+- تنظیمات SMTP
+- Battery settings
+- روشن/خاموش سرویس از داشبورد و تنظیمات
+
+نکته Email:
+برای Gmail باید App Password استفاده شود، نه رمز اصلی جیمیل.
