@@ -25,6 +25,7 @@ public class SmsReceiver extends BroadcastReceiver {
                 body.append(m.getMessageBody());
                 time = m.getTimestampMillis();
             }
+
             DataStore.addSms(context, sender, body.toString(), time);
         }
     }

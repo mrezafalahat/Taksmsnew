@@ -6,7 +6,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class DataStore {
-    private static final String PREF = "tak_sms_store_v7";
+    private static final String PREF = "tak_sms_forwarder_complete_v2";
     private static final String RULES = "rules";
     private static final String SMS = "sms";
     private static final String ENABLED = "enabled";
@@ -28,7 +28,9 @@ public class DataStore {
         catch(Exception e) { return new JSONArray(); }
     }
 
-    public static String getRules(Context c) { return getRulesArray(c).toString(); }
+    public static String getRules(Context c) {
+        return getRulesArray(c).toString();
+    }
 
     public static boolean saveRule(Context c, String ruleJson) {
         try {
@@ -54,10 +56,28 @@ public class DataStore {
                     newArr.put(old);
                 }
             }
+
             if (!found) newArr.put(rule);
             sp(c).edit().putString(RULES, newArr.toString()).apply();
             return true;
-        } catch(Exception e) { return false; }
+        } catch(Exception e) {
+            return false;
+        }
+    }
+
+    public static boolean deleteRule(Context c, String id) {
+        try {
+            JSONArray oldArr = getRulesArray(c);
+            JSONArray newArr = new JSONArray();
+            for (int i = 0; i < oldArr.length(); i++) {
+                JSONObject old = oldArr.getJSONObject(i);
+                if (!id.equals(old.optString("id"))) newArr.put(old);
+            }
+            sp(c).edit().putString(RULES, newArr.toString()).apply();
+            return true;
+        } catch(Exception e) {
+            return false;
+        }
     }
 
     public static JSONArray getSmsArray(Context c) {
@@ -65,7 +85,13 @@ public class DataStore {
         catch(Exception e) { return new JSONArray(); }
     }
 
-    public static String getSms(Context c) { return getSmsArray(c).toString(); }
+    public static String getSms(Context c) {
+        return getSmsArray(c).toString();
+    }
+
+    public static void clearSms(Context c) {
+        sp(c).edit().putString(SMS, "[]").apply();
+    }
 
     public static void addSms(Context c, String sender, String body, long time) {
         try {
@@ -73,6 +99,7 @@ public class DataStore {
             JSONArray newArr = new JSONArray();
 
             JSONObject matched = matchRule(c, sender, body);
+
             JSONObject m = new JSONObject();
             m.put("id", String.valueOf(System.currentTimeMillis()));
             m.put("sender", sender == null ? "" : sender);
@@ -80,17 +107,26 @@ public class DataStore {
             m.put("time", time);
             m.put("rule", matched.optString("rule", "عمومی"));
             m.put("senderNote", matched.optString("senderNote", ""));
+            m.put("forwarded", false);
             newArr.put(m);
 
-            int limit = Math.min(oldArr.length(), 99);
-            for (int i = 0; i < limit; i++) newArr.put(oldArr.getJSONObject(i));
+            int limit = Math.min(oldArr.length(), 199);
+            for (int i = 0; i < limit; i++) {
+                newArr.put(oldArr.getJSONObject(i));
+            }
+
             sp(c).edit().putString(SMS, newArr.toString()).apply();
         } catch(Exception ignored) {}
     }
 
     private static String normalize(String x) {
         if (x == null) return "";
-        return x.replace(" ", "").replace("-", "").replace("+98", "0").trim().toLowerCase();
+        return x.replace(" ", "")
+                .replace("-", "")
+                .replace("+98", "0")
+                .replace("۰۰", "00")
+                .trim()
+                .toLowerCase();
     }
 
     public static JSONObject matchRule(Context c, String sender, String body) {
@@ -125,12 +161,18 @@ public class DataStore {
                 }
 
                 String keywords = r.optString("keywords", "").trim().toLowerCase();
-                boolean keyOk = keywords.isEmpty() || "همه".equals(keywords);
+                boolean keyOk = keywords.isEmpty() || "همه".equals(keywords) || "all".equals(keywords);
+
                 if (!keyOk) {
-                    String[] parts = keywords.split("[,،\\s]+");
+                    String[] parts = keywords.split("[,،\\n\\s]+");
+                    keyOk = true;
                     for (String p : parts) {
                         p = p.trim();
-                        if (p.length() > 0 && all.contains(p)) { keyOk = true; break; }
+                        if (p.length() == 0) continue;
+                        if (!all.contains(p)) {
+                            keyOk = false;
+                            break;
+                        }
                     }
                 }
 

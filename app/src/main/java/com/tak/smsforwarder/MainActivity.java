@@ -32,31 +32,34 @@ public class MainActivity extends Activity {
         s.setDomStorageEnabled(true);
         s.setAllowFileAccess(true);
         s.setAllowContentAccess(true);
+        s.setMediaPlaybackRequiresUserGesture(false);
 
         webView.setWebViewClient(new WebViewClient());
         webView.addJavascriptInterface(new Bridge(), "AndroidBridge");
         webView.loadUrl("file:///android_asset/index.html");
 
-        requestSmsPermissionOnStart();
+        requestPermissionsOnStart();
     }
 
-    private void requestSmsPermissionOnStart() {
+    private void requestPermissionsOnStart() {
         if (Build.VERSION.SDK_INT >= 23) {
             if (checkSelfPermission(Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED
                     || checkSelfPermission(Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{
-                        Manifest.permission.RECEIVE_SMS,
-                        Manifest.permission.READ_SMS
-                }, 1201);
+                requestPermissions(new String[]{Manifest.permission.RECEIVE_SMS, Manifest.permission.READ_SMS}, 1201);
+            }
+        }
+
+        if (Build.VERSION.SDK_INT >= 33) {
+            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1202);
             }
         }
     }
 
-    private boolean isBatteryUnrestricted() {
+    private boolean batteryOk() {
         if (Build.VERSION.SDK_INT < 23) return true;
         PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
-        if (pm == null) return false;
-        return pm.isIgnoringBatteryOptimizations(getPackageName());
+        return pm != null && pm.isIgnoringBatteryOptimizations(getPackageName());
     }
 
     public class Bridge {
@@ -69,7 +72,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public boolean isBatteryUnrestricted() {
-            return MainActivity.this.isBatteryUnrestricted();
+            return batteryOk();
         }
 
         @JavascriptInterface
@@ -85,8 +88,7 @@ public class MainActivity extends Activity {
                     }
                 } catch(Exception e) {
                     try {
-                        startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                Uri.parse("package:" + getPackageName())));
+                        startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName())));
                     } catch(Exception ignored) {}
                 }
             });
@@ -113,8 +115,18 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public boolean deleteRule(String id) {
+            return DataStore.deleteRule(MainActivity.this, id);
+        }
+
+        @JavascriptInterface
         public String getSms() {
             return DataStore.getSms(MainActivity.this);
+        }
+
+        @JavascriptInterface
+        public void clearSms() {
+            DataStore.clearSms(MainActivity.this);
         }
 
         @JavascriptInterface
@@ -127,7 +139,14 @@ public class MainActivity extends Activity {
                 o.put("rulesCount", DataStore.getRulesArray(MainActivity.this).length());
                 o.put("smsCount", DataStore.getSmsArray(MainActivity.this).length());
                 return o.toString();
-            } catch(Exception e) { return "{}"; }
+            } catch(Exception e) {
+                return "{}";
+            }
+        }
+
+        @JavascriptInterface
+        public void addTestSms() {
+            DataStore.addSms(MainActivity.this, "0098100099", "کد تایید بانک ملت 12345 است.", System.currentTimeMillis());
         }
     }
 
@@ -135,8 +154,7 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (webView != null) {
-            webView.postDelayed(() ->
-                    webView.evaluateJavascript("window.App && App.refresh && App.refresh();", null), 300);
+            webView.postDelayed(() -> webView.evaluateJavascript("window.App && App.refresh && App.refresh();", null), 300);
         }
     }
 }
