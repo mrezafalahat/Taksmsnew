@@ -1,27 +1,23 @@
-# TAK SMS Forwarder - Kotlin SMS + Email
+# TAK SMS Forwarder - Kotlin Final Fixed
 
-نسخه کامل Kotlin برای جایگزینی:
+نسخه اصلاح‌شده بر اساس ایرادهای اعلام‌شده:
 
-- Java حذف شده؛ همه کلاس‌ها Kotlin هستند.
-- MainActivity.kt
-- SmsReceiver.kt
-- DataStore.kt
-- RuleMatcher.kt
-- SmsForwarder.kt
-- EmailForwarder.kt
-- Forwarder.kt
-- WebView UI در assets/index.html
+- حذف لوگو و زنگ از هدر
+- اصلاح منوی پایین و دسترسی بهتر
+- حذف باتری از داشبورد؛ باتری فقط در تنظیمات
+- کارت فیلتر با شماره ترتیبی به‌جای آیکون برق
+- سه کنترل روی کارت فیلتر: ویرایش، حذف تأییدی، فعال/غیرفعال
+- Toggle فیلتر و سرویس
+- LTR برای شماره‌ها، ایمیل‌ها، SMTP و مقصدها
+- History با نمایش درست شماره و وضعیت ارسال
+- تنظیمات شکیل‌تر برای Battery و Email
+- app/build.gradle اصلاح‌شده با Java/Kotlin JVM target 17
+- همه فایل‌ها Kotlin هستند، Java ندارد.
 
-قابلیت‌ها:
-- دریافت SMS واقعی
-- فوروارد به SMS
-- فوروارد به Email با SMTP SSL پورت 465
-- فقط ذخیره در History
-- ویرایش/حذف/فعال‌غیرفعال فیلتر
-- کارت جدا برای هر شماره + توضیح
-- تنظیمات SMTP
-- Battery settings
-- روشن/خاموش سرویس از داشبورد و تنظیمات
+جایگزینی:
+فایل‌های Java قبلی را پاک کن:
+MainActivity.java
+SmsReceiver.java
+DataStore.java
 
-نکته Email:
-برای Gmail باید App Password استفاده شود، نه رمز اصلی جیمیل.
+بعد این پروژه را جایگزین کن.
