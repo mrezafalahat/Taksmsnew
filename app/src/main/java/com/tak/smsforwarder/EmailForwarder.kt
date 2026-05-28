@@ -1,7 +1,6 @@
 package com.takpack.smsforwarder
 
 import android.content.Context
-import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.io.InputStreamReader

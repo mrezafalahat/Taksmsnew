@@ -5,7 +5,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 object DataStore {
-    private const val PREF = "tak_sms_forwarder_kotlin_sms_email_v3"
+    private const val PREF = "tak_sms_forwarder_kotlin_final_fixed_v31"
     private const val RULES = "rules"
     private const val MESSAGES = "messages"
     private const val SETTINGS = "settings"
@@ -40,6 +40,7 @@ object DataStore {
             val old = getRulesArray(context)
             val next = JSONArray()
             var found = false
+
             for (i in 0 until old.length()) {
                 val item = old.getJSONObject(i)
                 if (item.optString("id") == id) {
@@ -49,6 +50,7 @@ object DataStore {
                     next.put(item)
                 }
             }
+
             if (!found) next.put(rule)
             sp(context).edit().putString(RULES, next.toString()).apply()
             true
