@@ -1,4 +1,4 @@
-package com.takpack.smsforwarder
+package com.tak.smsforwarder
 
 import android.content.BroadcastReceiver
 import android.content.Context
