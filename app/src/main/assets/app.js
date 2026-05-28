@@ -1,2 +1,342 @@
+let screen = "dashboard";
+let wizardStep = 0;
+let editing = null;
+let expanded = {};
+let historyFilter = "ALL";
+const app = document.getElementById("app");
 
-const persianNums=n=>String(n).replace(/\d/g,d=>"۰۱۲۳۴۵۶۷۸۹"[d]);const timeAgo=mins=>mins<60?`${persianNums(mins)} دقیقه پیش`:mins<1440?`${persianNums(Math.floor(mins/60))} ساعت پیش`:`${persianNums(Math.floor(mins/1440))} روز پیش`;let screen="dashboard",selectedSms=null,filter="همه",ruleState=[true,true,false,true],settingsState={notif:true,autoFwd:true,encrypt:false,darkMode:false};const app=document.getElementById("app");const smsList=[{id:1,sender:"بانک ملت",number:"+982100",body:"کد تأیید شما: ۴۵۸۲۱ — برای ورود به حساب کاربری استفاده کنید.",time:3,tag:"بانکی",forwarded:true,color:"#3B82F6"},{id:2,sender:"دیجی‌کالا",number:"+9821100",body:"سفارش شما ارسال شد. کد رهگیری: DK-۸۸۲۳۱. تحویل تا فردا.",time:17,tag:"خرید",forwarded:true,color:"#8B5CF6"},{id:3,sender:"ایرانسل",number:"150",body:"اشتراک ماهانه اینترنت شما با موفقیت تمدید شد. موجودی: ۳۰ گیگابایت",time:45,tag:"اپراتور",forwarded:false,color:"#06B6D4"},{id:4,sender:"سامانه ۱۲۰",number:"120",body:"قبض برق دوره جدید صادر شد. مبلغ: ۴۸۰,۰۰۰ ریال. سررسید: ۱۴۰۳/۰۹/۱۵",time:120,tag:"خدمات",forwarded:true,color:"#10B981"},{id:5,sender:"علی احمدی",number:"+09121234567",body:"سلام، آیا می‌توانید امروز جلسه را تأیید کنید؟",time:200,tag:"شخصی",forwarded:false,color:"#F59E0B"},{id:6,sender:"بیمه آسیا",number:"+9821200",body:"بیمه‌نامه خودروی شما تا ۱۰ روز دیگر منقضی می‌شود. تمدید کنید.",time:360,tag:"بیمه",forwarded:true,color:"#EF4444"}];const rules=[{id:1,name:"قوانین بانکی",condition:"حاوی: بانک، کد، تأیید",dest:"تلگرام — کانال مالی",active:true,count:142,color:"#3B82F6"},{id:2,name:"خرید آنلاین",condition:"فرستنده: دیجی‌کالا، اسنپ‌فود",dest:"واتساپ — گروه خانوادگی",active:true,count:89,color:"#8B5CF6"},{id:3,name:"اپراتور تلفن",condition:"شماره: ۱۵۰، ۱۳۳، ۱۱۸",dest:"ایمیل — info@me.ir",active:false,count:34,color:"#06B6D4"},{id:4,name:"فیلتر اسپم",condition:"کلمات: تبلیغ، پیشنهاد ویژه",dest:"بایگانی خودکار",active:true,count:211,color:"#EF4444"}];const contacts=[{name:"علی احمدی",number:"+98 912 123 4567",avatar:"ع",color:"#3B82F6",messages:28,lastSeen:"آنلاین"},{name:"سارا محمدی",number:"+98 935 987 6543",avatar:"س",color:"#8B5CF6",messages:15,lastSeen:"۲ ساعت پیش"},{name:"بانک ملت",number:"+98 21 100",avatar:"ب",color:"#10B981",messages:67,lastSeen:"۳ دقیقه پیش"},{name:"دیجی‌کالا",number:"+98 21 100 0",avatar:"د",color:"#F59E0B",messages:43,lastSeen:"دیروز"},{name:"رضا کریمی",number:"+98 901 555 7890",avatar:"ر",color:"#EF4444",messages:9,lastSeen:"۳ روز پیش"}];function setScreen(s){screen=s;render()}function openSms(s){selectedSms=s;screen="detail";render()}function render(){let html="";if(screen==="dashboard")html=dashboard();if(screen==="sms")html=smsScreen();if(screen==="rules")html=rulesScreen();if(screen==="contacts")html=contactsScreen();if(screen==="settings")html=settingsScreen();if(screen==="detail")html=detailScreen();app.innerHTML=`<div class="screen">${html}</div>${screen!=="detail"?fab():""}${bottomNav()}`}function bottomNav(){const items=[["dashboard","⊞","داشبورد"],["sms","✉","پیام‌ها"],["rules","⚡","قوانین"],["contacts","👤","مخاطبین"],["settings","⚙","تنظیمات"]];const active=["dashboard","sms","rules","contacts","settings"].includes(screen)?screen:"sms";return`<div class="bottom-nav">${items.map(i=>`<button class="nav-item ${active===i[0]?"active":""}" onclick="setScreen('${i[0]}')"><div class="ico">${i[1]}</div><span>${i[2]}</span></button>`).join("")}</div>`}function fab(){return`<button class="fab" onclick="setScreen('rules')">+</button>`}function header(title,sub=""){return`<div class="header"><div class="header-row"><div><div class="hello">${sub||"خوش آمدید"}</div><div class="h-title">${title}</div></div><div style="display:flex;gap:10px"><button class="icon-btn">🔔</button><div class="avatar">ک</div></div></div></div>`}function dashboard(){return`${header("SMS Forwarder","خوش آمدید")}<div class="content"><div class="hero"><div class="hero-top"><div class="status-pill">● فعال</div><div style="font-size:30px">📡</div></div><div class="hero-num">${persianNums(1284)}</div><div class="hero-sub">پیام ارسال‌شده این ماه</div><div class="hero-stats">${heroStat("امروز",42)}${heroStat("دیروز",38)}${heroStat("هفته",284)}</div></div><div class="stat-row">${statCard("قوانین فعال",4,"+۱ این هفته","⚡","#6366F1")}${statCard("مخاطبین",12,"۳ جدید","👥","#8B5CF6")}${statCard("خطا",0,"همه سالم","✓","#10B981")}</div><div class="section-head"><div class="section-title">فعالیت اخیر</div><button class="link-btn" onclick="setScreen('sms')">مشاهده همه</button></div>${smsList.slice(0,3).map((s,i)=>smsCard(s,i)).join("")}<div class="section-title" style="margin:18px 0 13px">مقاصد ارسال</div><div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px">${destCard("تلگرام","✈️",842,"#2AABEE")}${destCard("واتساپ","💬",312,"#25D366")}${destCard("ایمیل","📧",130,"#6366F1")}</div></div>`}function heroStat(l,v){return`<div class="hero-stat"><b>${persianNums(v)}</b><span>${l}</span></div>`}function statCard(label,value,sub,icon,color){return`<div class="stat-card"><div class="stat-icon" style="background:${color}18">${icon}</div><div class="stat-value">${persianNums(value)}</div><div class="stat-label">${label}</div><div class="stat-sub" style="color:${color}">${sub}</div></div>`}function destCard(name,icon,count,color){return`<div class="stat-card" style="min-width:130px;text-align:center"><div style="font-size:28px;margin-bottom:6px">${icon}</div><div style="font-size:13px;font-weight:900">${name}</div><div style="font-size:18px;font-weight:900;color:${color};margin-top:4px">${persianNums(count)}</div><div class="stat-label">پیام</div></div>`}function smsCard(s,i=0){return`<div class="sms-card" style="animation:slideIn .3s ease ${i*50}ms both" onclick='openSms(${JSON.stringify(s)})'><div class="sms-row"><div class="sender-icon" style="background:${s.color}15;color:${s.color};border-color:${s.color}25">${s.sender[0]}</div><div class="sms-main"><div class="sms-top"><div class="sms-sender">${s.sender}</div><div class="sms-time">${timeAgo(s.time)}</div></div><div class="sms-num">${s.number}</div><div class="sms-body">${s.body}</div><div class="tags"><div class="tag" style="color:${s.color};background:${s.color}12">${s.tag}</div><div class="tag" style="color:${s.forwarded?"#10B981":"#94A3B8"};background:${s.forwarded?"#10B98112":"#F1F5F9"}">${s.forwarded?"✓ فوروارد شد":"○ فوروارد نشد"}</div></div></div></div></div>`}function smsScreen(){const filters=["همه","بانکی","خرید","اپراتور","شخصی"];const list=filter==="همه"?smsList:smsList.filter(s=>s.tag===filter);return`<div class="header"><div class="h-title">پیام‌های دریافتی</div><div class="search"><span>🔍</span><input placeholder="جستجو در پیام‌ها..."></div><div class="chips">${filters.map(f=>`<button class="chip ${filter===f?"active":""}" onclick="filter='${f}';render()">${f}</button>`).join("")}</div></div><div class="content">${list.map((s,i)=>smsCard(s,i)).join("")}</div>`}function toggleRule(i){ruleState[i]=!ruleState[i];render()}function rulesScreen(){return`<div class="header"><div class="h-title">قوانین فوروارد</div><div class="hello">${persianNums(ruleState.filter(Boolean).length)} قانون فعال از ${persianNums(rules.length)}</div></div><div class="content">${rules.map((r,i)=>`<div class="rule-card" style="opacity:${ruleState[i]?1:.7};border:1.5px solid ${ruleState[i]?r.color+"30":"transparent"}"><div class="rule-head"><div style="flex:1"><div class="rule-title-row"><div class="rule-icon" style="background:${r.color}15">${r.color==="#3B82F6"?"🏦":r.color==="#8B5CF6"?"🛒":r.color==="#06B6D4"?"📶":"🛡️"}</div><div><div class="rule-name">${r.name}</div><div class="rule-count">${persianNums(r.count)} پیام پردازش شده</div></div></div><div class="rule-box"><div class="label">شرط</div><div class="txt">${r.condition}</div></div><div class="rule-dest" style="background:${r.color}08;border-color:${r.color}"><div class="label">مقصد</div><div class="txt" style="color:${r.color};font-weight:800">${r.dest}</div></div></div><div class="toggle ${ruleState[i]?"on":""}" onclick="toggleRule(${i})"></div></div></div>`).join("")}<button class="add-rule"><div class="plus-box">+</div><div><div style="font-size:14px;font-weight:900">قانون جدید</div><div style="font-size:11px;color:rgba(255,255,255,.7)">یک قانون فوروارد اضافه کنید</div></div></button></div>`}function contactsScreen(){return`<div class="header"><div class="h-title">مخاطبین</div><div class="hello">مدیریت مخاطبین مجاز</div><div class="search"><span>🔍</span><input placeholder="جستجوی مخاطب..."></div></div><div class="content">${contacts.map((c,i)=>`<div class="contact-card" style="animation:slideIn .3s ease ${i*60}ms both"><div class="row"><div class="sender-icon" style="width:52px;height:52px;background:${c.color}18;color:${c.color};border-color:${c.color}20">${c.avatar}</div><div class="grow"><div class="sms-top"><div class="sms-sender">${c.name}</div><div style="font-size:16px;font-weight:900;color:${c.color}">${persianNums(c.messages)}</div></div><div class="sms-num">${c.number}</div><div class="sub">${c.lastSeen}</div></div></div></div>`).join("")}</div>`}function settingsScreen(){const rows=[["notif","🔔","اعلان‌ها","دریافت اعلان برای هر پیام"],["autoFwd","🚀","ارسال خودکار","فوروارد بدون تأیید"],["encrypt","🔒","رمزنگاری","رمزگذاری پیام‌های ارسالی"],["darkMode","🌙","تم تاریک","ظاهر تیره برنامه"]];const links=[["📡","مقاصد ارسال","۳ مقصد متصل"],["📊","گزارش فعالیت","آمار و لاگ‌ها"],["🔄","نسخه پشتیبان","آخرین: ۳ روز پیش"],["❓","راهنما","مستندات و پشتیبانی"]];return`<div class="header"><div class="h-title">تنظیمات</div><div class="profile"><div class="avatar" style="width:56px;height:56px;border-radius:20px">ک</div><div><div class="sms-sender">کاربر پریمیوم</div><div class="sms-num">user@example.com</div><div class="tag" style="color:#6366F1;background:#EEF2FF;display:inline-block;margin-top:4px">✦ اشتراک طلایی</div></div></div></div><div class="content"><div class="section-title" style="color:#94A3B8;font-size:13px;margin-bottom:10px">تنظیمات</div><div class="settings-list">${rows.map(r=>settingsRow(r)).join("")}</div><div class="section-title" style="color:#94A3B8;font-size:13px;margin-bottom:10px">بیشتر</div><div class="settings-list">${links.map(l=>linkRow(l)).join("")}</div><div style="text-align:center;margin-top:24px;padding:16px;font-size:11px;color:#94A3B8">نسخه ۲.۴.۱ — ساخته شده با ♥</div></div>`}function settingsRow(r){return`<div class="settings-row"><div class="settings-icon">${r[1]}</div><div class="grow"><div class="settings-label">${r[2]}</div><div class="settings-sub">${r[3]}</div></div><div class="toggle ${settingsState[r[0]]?"on":""}" onclick="settingsState['${r[0]}']=!settingsState['${r[0]}'];render()"></div></div>`}function linkRow(l){return`<div class="settings-row"><div class="settings-icon">${l[0]}</div><div class="grow"><div class="settings-label">${l[1]}</div><div class="settings-sub">${l[2]}</div></div><div style="color:#CBD5E1;font-size:18px">‹</div></div>`}function detailScreen(){const s=selectedSms||smsList[0];return`<div class="header" style="background:linear-gradient(160deg, ${s.color}15 0%, #fff 70%)"><div class="row" style="margin-bottom:24px"><button class="detail-back" onclick="setScreen('sms')">›</button><div class="h-title" style="font-size:18px">جزئیات پیام</div></div><div class="detail-card"><div class="row"><div class="sender-icon" style="width:56px;height:56px;border-radius:20px;background:${s.color}18;color:${s.color};border-color:${s.color}20">${s.sender[0]}</div><div><div class="h-title" style="font-size:18px">${s.sender}</div><div class="sms-num">${s.number}</div></div></div><div class="message-box">${s.body}</div><div class="tags"><div class="tag" style="color:${s.color};background:${s.color}12">${s.tag}</div><div class="tag">${timeAgo(s.time)}</div>${s.forwarded?`<div class="tag" style="color:#10B981;background:#10B98112">✓ فوروارد شد</div>`:""}</div></div></div><div class="content"><div class="section-title" style="margin-bottom:14px">تاریخچه ارسال</div>${s.forwarded?`<div class="log-card">${logRow("تلگرام — کانال مالی","۱۴:۳۲","✓ تحویل شد")}${logRow("ایمیل — info@me.ir","۱۴:۳۲","✓ تحویل شد")}</div>`:`<div class="settings-card" style="background:#FFF7ED;border:1.5px solid #FED7AA;text-align:center"><div style="font-size:28px">⚠️</div><div style="font-weight:900;color:#92400E">این پیام فوروارد نشد</div><div style="font-size:12px;color:#B45309;margin-top:4px">هیچ قانونی با این پیام مطابقت نداشت</div></div>`}<div style="display:flex;gap:12px;margin-top:20px"><button class="btn" style="flex:1">📤 ارسال مجدد</button><button class="btn danger" style="width:58px">🗑️</button></div></div>`}function logRow(dest,time,status){return`<div class="log-row"><div class="dot"></div><div class="grow"><div class="settings-label">${dest}</div><div style="font-size:11px;color:#10B981;font-weight:800;margin-top:2px">${status}</div></div><div class="sms-time">${time}</div></div>`}render();
+const hasBridge = () => typeof TakBridge !== "undefined";
+
+function getRules(){
+  try { return hasBridge() ? JSON.parse(TakBridge.getRules()) : []; }
+  catch(e){ return []; }
+}
+
+function getHistory(){
+  try { return hasBridge() ? JSON.parse(TakBridge.getHistory()) : []; }
+  catch(e){ return []; }
+}
+
+function saveRuleToKotlin(rule){
+  if(!hasBridge()){
+    alert("Bridge فعال نیست");
+    return;
+  }
+  TakBridge.saveRule(
+    String(rule.id || ""),
+    rule.name || "",
+    rule.sender || "",
+    rule.keyword || "",
+    rule.target || "",
+    rule.suffix || "",
+    !!rule.enabled,
+    !!rule.allowOtp
+  );
+}
+
+function deleteRuleFromKotlin(id){
+  if(hasBridge()) TakBridge.deleteRule(String(id));
+}
+
+function toggleRuleInKotlin(id, enabled){
+  if(hasBridge()) TakBridge.toggleRule(String(id), !!enabled);
+}
+
+function clearHistoryInKotlin(){
+  if(hasBridge()) TakBridge.clearHistory();
+}
+
+function render(){
+  if(screen === "dashboard") renderDashboard();
+  if(screen === "filters") renderFilters();
+  if(screen === "edit") renderWizard();
+  if(screen === "history") renderHistory();
+  if(screen === "settings") renderSettings();
+}
+
+function shell(title, sub, content, fab=true){
+  app.innerHTML = `
+    <div class="screen">
+      <div class="header">
+        <div class="header-row">
+          <div>
+            <div class="hello">${sub || ""}</div>
+            <div class="h-title">${title}</div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="icon-btn">🔔</button>
+            <div class="avatar">تک</div>
+          </div>
+        </div>
+      </div>
+      <div class="content">${content}</div>
+    </div>
+
+    ${fab ? `<button class="fab" onclick="newRule()">+</button>` : ""}
+
+    <div class="bottom-nav">
+      <button class="nav-item ${screen==="dashboard"?"active":""}" onclick="screen='dashboard';render()"><div class="ico">⊞</div><span>داشبورد</span></button>
+      <button class="nav-item ${screen==="filters"?"active":""}" onclick="screen='filters';render()"><div class="ico">⚡</div><span>فیلترها</span></button>
+      <button class="nav-item ${screen==="history"?"active":""}" onclick="screen='history';render()"><div class="ico">↺</div><span>History</span></button>
+      <button class="nav-item ${screen==="settings"?"active":""}" onclick="screen='settings';render()"><div class="ico">⚙</div><span>تنظیمات</span></button>
+    </div>
+  `;
+}
+
+function renderDashboard(){
+  const rules = getRules();
+  const history = getHistory();
+  const success = history.filter(x => x.success).length;
+  const fail = history.filter(x => !x.success).length;
+  const enabled = rules.filter(x => x.enabled).length;
+
+  const html = `
+    <div class="hero">
+      <div class="hero-top">
+        <div class="status-pill">● فعال</div>
+        <div style="font-size:30px">📡</div>
+      </div>
+      <div class="hero-num">${fa(success)}</div>
+      <div class="hero-sub">ارسال موفق ثبت‌شده</div>
+      <div class="hero-stats">
+        <div class="hero-stat"><b>${fa(enabled)}</b><span>فیلتر فعال</span></div>
+        <div class="hero-stat"><b>${fa(fail)}</b><span>ناموفق</span></div>
+        <div class="hero-stat"><b>${fa(history.length)}</b><span>کل رویداد</span></div>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      ${statCard("فیلترها", rules.length, "کل قوانین", "⚡", "#6366F1")}
+      ${statCard("فعال", enabled, "در حال کار", "✓", "#10B981")}
+      ${statCard("خطا", fail, "بررسی شود", "!", "#EF4444")}
+    </div>
+
+    <div class="section-head">
+      <div class="section-title">آخرین عملیات</div>
+      <button class="link-btn" onclick="screen='history';render()">مشاهده همه</button>
+    </div>
+
+    ${history.slice(0,3).map(historyCard).join("") || `<div class="card empty">هنوز History ثبت نشده</div>`}
+  `;
+
+  shell("TAK SMS", "کنترل پنل فوروارد پیامک", html);
+}
+
+function statCard(label,value,sub,icon,color){
+  return `
+    <div class="stat-card">
+      <div class="stat-icon" style="background:${color}18">${icon}</div>
+      <div class="stat-value">${fa(value)}</div>
+      <div class="stat-label">${label}</div>
+      <div class="stat-sub" style="color:${color}">${sub}</div>
+    </div>
+  `;
+}
+
+function renderFilters(){
+  const rules = getRules();
+  let html = "";
+
+  if(!rules.length){
+    html = `<div class="card empty">هنوز فیلتری ثبت نشده<br><br><button class="btn" onclick="newRule()">افزودن اولین فیلتر</button></div>`;
+  } else {
+    html = rules.map(ruleCard).join("");
+  }
+
+  shell("فیلترها", "ساخت، ویرایش و کنترل قوانین", html);
+}
+
+function ruleCard(r){
+  const open = !!expanded[r.id];
+
+  return `
+    <div class="card ${open ? "" : "collapsed"}">
+      <div class="row">
+        <div class="badge">${r.enabled ? "ON" : "OFF"}</div>
+        <div class="grow">
+          <div class="title">${esc(r.name || "Filter")}</div>
+          <div class="sub">از: ${esc(r.sender || "همه")}</div>
+        </div>
+        <div class="switch ${r.enabled ? "on" : ""}" onclick="toggleRule('${r.id}', ${!r.enabled})"></div>
+      </div>
+
+      <div class="info"><div class="k">کلمات</div><div>${esc(r.keyword || "همه پیام‌ها")}</div></div>
+      <div class="info"><div class="k">مقصد</div><div>${esc(r.target || "---")}</div></div>
+
+      <div class="extra">
+        <div class="info"><div class="k">متن اضافه</div><div>${esc(r.suffix || "هیچ")}</div></div>
+        <div class="info"><div class="k">OTP</div><div>${r.allowOtp ? "مجاز" : "مسدود"}</div></div>
+        <div class="info"><div class="k">شناسه</div><div>${r.id}</div></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn light" onclick="expanded['${r.id}'] = !expanded['${r.id}']; render()">جزئیات</button>
+        <button class="btn gray" onclick='editRule(${JSON.stringify(r)})'>ویرایش</button>
+        <button class="btn danger" onclick="deleteRule('${r.id}')">حذف</button>
+      </div>
+    </div>
+  `;
+}
+
+function newRule(){
+  editing = {id:"", name:"", sender:"", keyword:"", target:"", suffix:"", enabled:true, allowOtp:false};
+  wizardStep = 0;
+  screen = "edit";
+  render();
+}
+
+function editRule(r){
+  editing = {...r};
+  wizardStep = 0;
+  screen = "edit";
+  render();
+}
+
+function renderWizard(){
+  const titles = ["نام و فرستنده", "شرط پیام", "مقصد و متن", "خلاصه"];
+  const dots = [0,1,2,3].map(i => `<div class="dot ${i===wizardStep ? "active" : ""}"></div>`).join("");
+
+  let body = `<div class="wizardTop">${dots}</div><div class="card"><div class="title">${titles[wizardStep]}</div><br>`;
+
+  if(wizardStep === 0){
+    body += `
+      <input class="input" placeholder="نام فیلتر، مثلا بانک صنعت" value="${attr(editing.name)}" oninput="editing.name=this.value">
+      <textarea class="input" placeholder="فرستنده/سرشماره؛ مثلا 100099 یا MALIAT یا خالی" oninput="editing.sender=this.value">${esc(editing.sender)}</textarea>
+    `;
+  }
+
+  if(wizardStep === 1){
+    body += `
+      <textarea class="input" placeholder="کلمات کلیدی؛ مثلا بانک صنعت معدن 58004 واریز" oninput="editing.keyword=this.value">${esc(editing.keyword)}</textarea>
+      <p class="sub">همه کلمات باید در متن پیام باشند.</p>
+    `;
+  }
+
+  if(wizardStep === 2){
+    body += `
+      <textarea class="input" placeholder="مقصدها؛ هر شماره در یک خط یا با کاما" oninput="editing.target=this.value">${esc(editing.target)}</textarea>
+      <input class="input" placeholder="متن اضافه آخر پیام، اختیاری" value="${attr(editing.suffix)}" oninput="editing.suffix=this.value">
+      <label class="checkline"><input type="checkbox" ${editing.allowOtp ? "checked" : ""} onchange="editing.allowOtp=this.checked"> اجازه فوروارد OTP</label>
+    `;
+  }
+
+  if(wizardStep === 3){
+    body += `
+      <div class="info"><div class="k">نام</div><div>${esc(editing.name || "Filter")}</div></div>
+      <div class="info"><div class="k">از</div><div>${esc(editing.sender || "همه")}</div></div>
+      <div class="info"><div class="k">کلمات</div><div>${esc(editing.keyword || "همه")}</div></div>
+      <div class="info"><div class="k">به</div><div>${esc(editing.target || "---")}</div></div>
+      <div class="info"><div class="k">OTP</div><div>${editing.allowOtp ? "مجاز" : "مسدود"}</div></div>
+    `;
+  }
+
+  body += `</div>
+    <div class="footerActions">
+      <button class="btn out" onclick="${wizardStep===0 ? "screen='filters';render()" : "wizardStep--;render()"}">${wizardStep===0 ? "لغو" : "قبلی"}</button>
+      <button class="btn" onclick="${wizardStep===3 ? "saveWizard()" : "wizardStep++;render()"}">${wizardStep===3 ? "ذخیره" : "بعدی"}</button>
+    </div>
+  `;
+
+  shell(editing.id ? "ویرایش فیلتر" : "افزودن فیلتر", "Wizard ساخت فیلتر", body, false);
+}
+
+function saveWizard(){
+  if(!editing.target || !editing.target.trim()){
+    alert("مقصد را وارد کن");
+    return;
+  }
+
+  saveRuleToKotlin({
+    id: editing.id || "",
+    name: editing.name || "",
+    sender: editing.sender || "",
+    keyword: editing.keyword || "",
+    target: editing.target || "",
+    suffix: editing.suffix || "",
+    enabled: true,
+    allowOtp: !!editing.allowOtp
+  });
+
+  screen = "filters";
+  render();
+}
+
+function renderHistory(){
+  let items = getHistory();
+  if(historyFilter === "FAIL") items = items.filter(x => !x.success);
+
+  let html = `
+    <div class="chips">
+      <button class="chip ${historyFilter==="ALL" ? "active" : ""}" onclick="historyFilter='ALL';render()">All</button>
+      <button class="chip ${historyFilter==="FAIL" ? "active" : ""}" onclick="historyFilter='FAIL';render()">Fail</button>
+      <button class="chip" onclick="clearHistoryInKotlin();render()">پاک کردن</button>
+    </div>
+  `;
+
+  html += items.length ? items.map(historyCard).join("") : `<div class="card empty">History خالی است</div>`;
+
+  shell("History", "نتیجه ارسال‌ها و خطاها", html, false);
+}
+
+function historyCard(it){
+  const open = !!expanded["h"+it.id];
+
+  return `
+    <div class="card history-card ${open ? "open" : ""}" onclick="expanded['h${it.id}'] = !expanded['h${it.id}']; render()">
+      <div class="row">
+        <div class="grow">
+          <div class="senderBlock">${esc(it.sender || "---")}</div>
+          <div class="targetBlock"><span class="arrow">↪</span> ${esc(it.target || "---")}</div>
+        </div>
+        <div class="badge ${it.success ? "success" : "fail"}">${it.success ? "Success" : "Fail"}</div>
+      </div>
+      <div class="msg">${esc(it.message || "")}</div>
+      <div class="row" style="margin-top:10px">
+        <div class="sub grow">${esc(it.time || "")}</div>
+        <div class="sub">${open ? "بستن" : "جزئیات"}</div>
+      </div>
+      ${open ? `
+        <div class="info"><div class="k">فیلتر</div><div>${esc(it.filterName || "")}</div></div>
+        <div class="info"><div class="k">نتیجه</div><div>${esc(it.result || "")}</div></div>
+      ` : ""}
+    </div>
+  `;
+}
+
+function renderSettings(){
+  const html = `
+    <div class="card">
+      <div class="title">تنظیمات مهم</div>
+      <p class="sub">برای کار در پس‌زمینه، Battery را روی Unrestricted بگذار.</p>
+      <br>
+      <button class="btn" onclick="TakBridge.requestBattery()">تنظیم Battery</button>
+    </div>
+
+    <div class="card">
+      <div class="title">راهنما</div>
+      <div class="info"><div class="k">کلمات</div><div>با شرط AND بررسی می‌شوند.</div></div>
+      <div class="info"><div class="k">مقصد</div><div>چند شماره با کاما یا خط جدید.</div></div>
+      <div class="info"><div class="k">فرستنده</div><div>شماره، سرشماره یا نام مثل MALIAT.</div></div>
+    </div>
+  `;
+
+  shell("تنظیمات", "مجوزها و راهنما", html, false);
+}
+
+function toggleRule(id, enabled){
+  toggleRuleInKotlin(id, enabled);
+  render();
+}
+
+function deleteRule(id){
+  if(confirm("فیلتر حذف شود؟")){
+    deleteRuleFromKotlin(id);
+    render();
+  }
+}
+
+function fa(n){ return String(n ?? 0).replace(/\d/g, d => "۰۱۲۳۴۵۶۷۸۹"[d]); }
+function esc(s){ return String(s ?? "").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+function attr(s){ return esc(s).replace(/"/g, "&quot;"); }
+
+render();
