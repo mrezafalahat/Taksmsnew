@@ -1,10 +1,25 @@
-# TAK SMS Forwarder - Fixed UI
+# TAK SMS Forwarder COMPLETE CONNECTED
 
-اصلاحات:
-- دکمه + از پشت منوی پایین بیرون آمد و بالاتر قرار گرفت.
-- دکمه + فقط در صفحه فیلترها نمایش داده می‌شود و به Wizard افزودن فیلتر می‌رود.
-- دکمه لوگوی «تک» فعال شد و به داشبورد می‌رود.
-- دکمه زنگ فعال شد و Toast نمایش می‌دهد.
-- بخش Battery در تنظیمات به Android Battery Optimization وصل شد.
-- مجوز SMS همچنان ابتدای اجرای برنامه درخواست می‌شود.
-- شماره‌ها داخل کارت جدا با توضیح جدا ذخیره می‌شوند.
+نسخه کامل متصل:
+- UI اصلاح‌شده و سالم
+- Dashboard
+- Filters
+- Add Filter Wizard
+- History
+- Settings
+- اتصال کامل WebView به AndroidBridge
+- دریافت SMS واقعی با BroadcastReceiver
+- ذخیره فیلترها در SharedPreferences
+- ذخیره SMSها در SharedPreferences
+- کارت جدا برای هر شماره + توضیح شماره
+- دکمه Battery متصل به تنظیمات واقعی Android
+- مجوز SMS ابتدای اجرای برنامه
+- دکمه لوگو و زنگ فعال
+- FAB درست بالای منوی پایین
+
+نصب:
+1. ZIP را Extract کن.
+2. پوشه TakSmsForwarder_COMPLETE_CONNECTED را با Android Studio باز کن.
+3. Gradle Sync.
+4. روی گوشی واقعی Run بگیر.
+5. اول برنامه مجوز SMS را بده.
