@@ -13,28 +13,23 @@ object Forwarder {
         phoneNumber: String,
         message: String
     ) {
-
         try {
+            val smsManager: SmsManager = SmsManager.getDefault()
 
-            val smsManager = SmsManager.getDefault()
-
-            val parts: ArrayList<String> =
-                smsManager.divideMessage(message)
+            val parts: ArrayList<String> = smsManager.divideMessage(message)
 
             smsManager.sendMultipartTextMessage(
                 phoneNumber,
                 null,
                 parts,
-                null,
-                null
+                null as ArrayList<android.app.PendingIntent>?,
+                null as ArrayList<android.app.PendingIntent>?
             )
 
             Log.d(TAG, "SMS sent to: $phoneNumber")
 
         } catch (e: Exception) {
-
             Log.e(TAG, "SMS send failed", e)
-
         }
     }
 }
