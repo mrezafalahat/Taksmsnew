@@ -36,17 +36,17 @@ class MainActivity : Activity() {
 
         webView.webViewClient = WebViewClient()
 
-        val s: WebSettings = webView.settings
-        s.javaScriptEnabled = true
-        s.domStorageEnabled = true
-        s.databaseEnabled = true
-        s.allowFileAccess = true
-        s.allowContentAccess = true
-        s.useWideViewPort = true
-        s.loadWithOverviewMode = true
-        s.setSupportZoom(false)
-        s.builtInZoomControls = false
-        s.displayZoomControls = false
+        val settings: WebSettings = webView.settings
+        settings.javaScriptEnabled = true
+        settings.domStorageEnabled = true
+        settings.databaseEnabled = true
+        settings.allowFileAccess = true
+        settings.allowContentAccess = true
+        settings.useWideViewPort = true
+        settings.loadWithOverviewMode = true
+        settings.setSupportZoom(false)
+        settings.builtInZoomControls = false
+        settings.displayZoomControls = false
 
         webView.addJavascriptInterface(SmsBridge(), "Android")
         webView.loadUrl("file:///android_asset/index.html")
@@ -73,8 +73,9 @@ class MainActivity : Activity() {
     private fun requestBatteryIgnore() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             try {
-                val pm = getSystemService(POWER_SERVICE) as PowerManager
-                if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+                val powerManager = getSystemService(POWER_SERVICE) as PowerManager
+
+                if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
                     val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
                     intent.data = Uri.parse("package:$packageName")
                     startActivity(intent)
@@ -129,17 +130,15 @@ class MainActivity : Activity() {
         fun testRule(json: String): String {
             return try {
                 val obj = JSONObject(json)
-
-                val phone = obj.optString("phoneNumber", "")
+                val phoneNumber = obj.optString("phoneNumber", "")
                 val message = obj.optString("message", "")
 
-                if (phone.isNotBlank() && message.isNotBlank()) {
-                    Forwarder.send(this@MainActivity, phone, message)
+                if (phoneNumber.isNotBlank() && message.isNotBlank()) {
+                    Forwarder.send(this@MainActivity, phoneNumber, message)
                     """{"ok":true}"""
                 } else {
                     """{"ok":false,"error":"phoneNumber or message is empty"}"""
                 }
-
             } catch (e: Exception) {
                 """{"ok":false,"error":"${e.message ?: "test error"}"}"""
             }
