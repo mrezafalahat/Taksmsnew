@@ -230,6 +230,23 @@ function forwardLabel(t){
   if(t==='email') return 'Email';
   return 'History';
 }
+
+function splitMultiText(value){
+  return String(value||'')
+    .split(/\n|,|،|;|؛/)
+    .map(x=>x.trim())
+    .filter(x=>x && x!=='همه' && x.toLowerCase()!=='all');
+}
+function sendersToText(senders){
+  return (senders||[])
+    .map(x=>String((x&&x.number)||'').trim())
+    .filter(x=>x)
+    .join('\n');
+}
+function textToSenders(value){
+  const list=splitMultiText(value);
+  return list.map(x=>({number:x,note:''}));
+}
 function destinationSummary(){
   const rows=[];
   if((form.smsTarget||'').trim()) rows.push(`<span class="num-pill"><b>SMS</b><span class="ltr">${esc(form.smsTarget)}</span></span>`);
@@ -240,12 +257,8 @@ function destinationSummary(){
 function readStep(){
  if(step===1){form.name=$('fName')?.value.trim()||"";form.type=$('fType')?.value.trim()||"OTP"}
  if(step===2){
-  form.senders=[];
-  document.querySelectorAll('.sender-card').forEach(c=>{
-   const number=c.querySelector('.sender-number').value.trim();
-   const note=c.querySelector('.sender-note').value.trim();
-   if(number||note) form.senders.push({number,note});
-  });
+  const senderText=$('fSenderNumbers')?.value||'';
+  form.senders=textToSenders(senderText);
   form.keywords=$('fKeywords')?.value.trim()||"همه";
   form.smartPhrases=$('fSmartPhrases')?.value.trim()||"";
  }
@@ -285,11 +298,10 @@ function renderStep(){
  $('nextBtn').textContent=step===4?'ذخیره':'بعدی';
  let h='';
  if(step===1) h=`<div class="field"><div class="label">نام فیلتر</div><input class="input" id="fName" value="${esc(form.name)}" placeholder="مثلاً بانک‌ها"></div><div class="field"><div class="label">نوع فیلتر</div><input class="input" id="fType" value="${esc(form.type)}" placeholder="OTP / بانک / تبلیغات"></div>`;
- if(step===2) h=`<div class="field"><div class="label">شماره‌های فرستنده</div><div style="font-size:12px;color:#8b94a7;line-height:1.9;margin-bottom:12px">هر شماره جدا داخل یک کارت ثبت می‌شود و توضیح جدا می‌گیرد.</div><div id="sendersBox"></div><button class="add-number" id="addNumberBtn">+ افزودن شماره جدید</button></div><div class="field"><div class="label">شرط‌های عمومی - همه باید باشند</div><textarea class="input textarea" id="fKeywords" placeholder="مثلاً: بانک صنعت و معدن">${esc(form.keywords)}</textarea></div><div class="field"><div class="label">عبارت‌های هوشمند - یکی کافی است</div><textarea class="input textarea" id="fSmartPhrases" placeholder="مثلاً هر خط یک عبارت:&#10;برداشت از 58004&#10;واریز به 58004">${esc(form.smartPhrases||'')}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">فاصله، دو نقطه، خط تیره، ي/ی، ك/ک و عدد فارسی/انگلیسی نادیده گرفته می‌شود. کلمات باید به همین ترتیب در پیام باشند.</div></div>`;
+ if(step===2) h=`<div class="field"><div class="label">شماره‌ها / نام‌های فرستنده پیامک ورودی</div><textarea class="input textarea ltr" id="fSenderNumbers" placeholder="هر فرستنده در یک خط بنویسید:&#10;30001234&#10;50004000&#10;+98912xxxxxxx&#10;Bank">${esc(sendersToText(form.senders))}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">اگر این قسمت خالی باشد، فیلتر روی همه فرستنده‌ها اعمال می‌شود. برای چند فرستنده، هر شماره یا نام را در یک خط بنویس.</div></div><div class="field"><div class="label">شرط‌های عمومی - همه باید باشند</div><textarea class="input textarea" id="fKeywords" placeholder="مثلاً: بانک صنعت و معدن">${esc(form.keywords)}</textarea></div><div class="field"><div class="label">عبارت‌های هوشمند - یکی کافی است</div><textarea class="input textarea" id="fSmartPhrases" placeholder="مثلاً هر خط یک عبارت:&#10;برداشت از 58004&#10;واریز به 58004">${esc(form.smartPhrases||'')}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">فاصله، دو نقطه، خط تیره، ي/ی، ك/ک و عدد فارسی/انگلیسی نادیده گرفته می‌شود. کلمات باید به همین ترتیب در پیام باشند.</div></div>`;
  if(step===3) h=`<div class="field"><div class="label">شماره‌های مقصد SMS</div><textarea class="input textarea ltr" id="fSmsTarget" placeholder="هر شماره در یک خط یا با , جدا شود">${esc(form.smsTarget)}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">برای چند شماره، هر شماره را در یک خط بنویس.</div></div><div class="field"><div class="label">ایمیل‌های مقصد</div><textarea class="input textarea ltr" id="fEmailTarget" placeholder="هر ایمیل در یک خط یا با , جدا شود">${esc(form.emailTarget)}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">برای چند ایمیل، هر ایمیل را در یک خط بنویس.</div></div>`;
  if(step===4){ form.forwardType=inferForwardType(); h=`<div class="card summary"><div style="font-size:22px;font-weight:900;margin-bottom:20px">خلاصه</div><div class="sumrow"><div class="k">نام</div><div class="v">${esc(form.name)}</div></div><div class="sumrow"><div class="k">شماره‌ها</div><div class="v">${numberSummary()}</div></div><div class="sumrow"><div class="k">کلمات</div><div class="v">${esc(form.keywords||'همه')}</div></div><div class="sumrow"><div class="k">عبارت هوشمند</div><div class="v">${esc(form.smartPhrases||'ندارد')}</div></div><div class="sumrow"><div class="k">ارسال</div><div class="v">${esc(forwardLabel(form.forwardType))}</div></div><div class="sumrow"><div class="k">مقصد</div><div class="v">${destinationSummary()}</div></div></div>`}
  $('stepBox').innerHTML=h;
- if(step===2) renderSenderCards();
  bindDraftInputs();
  saveFormDraft();
 }
@@ -319,7 +331,7 @@ function saveRule(){
 function refresh(){
  if(bridge()){try{rules=JSON.parse(bridge().getRules()||'[]');messages=JSON.parse(bridge().getMessages()||'[]');settings=JSON.parse(bridge().getSettings()||'{}');statusObj=JSON.parse(bridge().getStatus()||'{}')}catch(e){statusObj={}}}
  else{rules=JSON.parse(localStorage.getItem('rules')||'[]');messages=JSON.parse(localStorage.getItem('messages')||'[]');settings=JSON.parse(localStorage.getItem('settings')||'{}');statusObj={receiveSms:false,sendSms:false,enabled:true,battery:false}}
- rules=rules.map(r=>{r.smsTarget=r.smsTarget||'';r.emailTarget=r.emailTarget||'';r.forwardType=(r.smsTarget&&r.emailTarget)?'both':(r.smsTarget?'sms':(r.emailTarget?'email':'history'));if(typeof r.enabled==='undefined')r.enabled=true;return r});
+ rules=rules.map(r=>{r.smsTarget=r.smsTarget||'';r.emailTarget=r.emailTarget||'';if(!Array.isArray(r.senders)){const raw=r.senderNumbers||r.sender||r.senderNumber||'';r.senders=textToSenders(raw);}r.forwardType=(r.smsTarget&&r.emailTarget)?'both':(r.smsTarget?'sms':(r.emailTarget?'email':'history'));if(typeof r.enabled==='undefined')r.enabled=true;return r});
 }
 function renderDashboard(){
  $('dashRulesNum').textContent=fa(rules.filter(r=>r.enabled!==false).length); $('dashSmsNum').textContent=fa(messages.length);
