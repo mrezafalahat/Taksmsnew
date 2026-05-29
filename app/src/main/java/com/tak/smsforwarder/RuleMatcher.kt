@@ -177,10 +177,26 @@ object RuleMatcher {
         return ""
     }
 
+    private fun targetValues(rule: JSONObject, arrayKey: String, legacyKey: String): String {
+        val arr = rule.optJSONArray(arrayKey)
+        val values = mutableListOf<String>()
+        if (arr != null) {
+            for (i in 0 until arr.length()) {
+                val item = arr.optJSONObject(i)
+                val name = item?.optString("name", "") ?: ""
+                val raw = if (item != null) item.optString("value", "") else arr.optString(i, "")
+                val value = raw.substringAfterLast("|").trim()
+                if (value.isNotBlank()) values.add(if (name.isNotBlank()) "$name: $value" else value)
+            }
+        }
+        if (values.isNotEmpty()) return values.joinToString(" / ")
+        return rule.optString(legacyKey, "").trim()
+    }
+
     fun forwardTarget(rule: JSONObject?): String {
         if (rule == null) return ""
-        val sms = rule.optString("smsTarget", "").trim()
-        val email = rule.optString("emailTarget", "").trim()
+        val sms = targetValues(rule, "smsTargets", "smsTarget")
+        val email = targetValues(rule, "emailTargets", "emailTarget")
         val parts = mutableListOf<String>()
         if (sms.isNotBlank()) parts.add("SMS: $sms")
         if (email.isNotBlank()) parts.add("Email: $email")

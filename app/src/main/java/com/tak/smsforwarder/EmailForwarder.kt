@@ -78,8 +78,8 @@ object EmailForwarder {
             if (!mailFrom.startsWith("250")) return false to "MAIL FROM خطا: $mailFrom"
 
             val targets = toAddress
-                .split(",", "،", ";", "\n")
-                .map { it.trim() }
+                .split(",", "،", ";", "؛", "\n")
+                .map { it.trim().substringAfterLast("|").trim() }
                 .filter { it.isNotBlank() }
 
             for (target in targets) {

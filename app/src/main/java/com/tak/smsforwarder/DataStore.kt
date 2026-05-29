@@ -25,9 +25,24 @@ object DataStore {
 
     fun getRules(context: Context): String = getRulesArray(context).toString()
 
+    private fun namedTargetValues(rule: JSONObject, arrayKey: String, legacyKey: String): String {
+        val arr = rule.optJSONArray(arrayKey)
+        val values = mutableListOf<String>()
+        if (arr != null) {
+            for (i in 0 until arr.length()) {
+                val item = arr.optJSONObject(i)
+                val v = if (item != null) item.optString("value", "") else arr.optString(i, "")
+                val clean = v.substringAfterLast("|").trim()
+                if (clean.isNotBlank()) values.add(clean)
+            }
+        }
+        if (values.isNotEmpty()) return values.joinToString("\n")
+        return rule.optString(legacyKey, "").trim()
+    }
+
     private fun inferForwardType(rule: JSONObject): String {
-        val hasSms = rule.optString("smsTarget", "").trim().isNotBlank()
-        val hasEmail = rule.optString("emailTarget", "").trim().isNotBlank()
+        val hasSms = namedTargetValues(rule, "smsTargets", "smsTarget").isNotBlank()
+        val hasEmail = namedTargetValues(rule, "emailTargets", "emailTarget").isNotBlank()
         return when {
             hasSms && hasEmail -> "both"
             hasSms -> "sms"
@@ -46,6 +61,8 @@ object DataStore {
             }
             if (!rule.has("enabled")) rule.put("enabled", true)
             if (!rule.has("senders")) rule.put("senders", JSONArray())
+            rule.put("smsTarget", namedTargetValues(rule, "smsTargets", "smsTarget"))
+            rule.put("emailTarget", namedTargetValues(rule, "emailTargets", "emailTarget"))
             rule.put("forwardType", inferForwardType(rule))
 
             val old = getRulesArray(context)
@@ -186,7 +203,7 @@ object DataStore {
     fun exportAll(context: Context): String {
         return JSONObject()
             .put("app", "TAK SMS Forwarder")
-            .put("version", 1)
+            .put("version", 2)
             .put("createdAt", System.currentTimeMillis())
             .put("rules", getRulesArray(context))
             .put("messages", getMessagesArray(context))

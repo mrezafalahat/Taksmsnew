@@ -4,6 +4,21 @@ import android.content.Context
 import org.json.JSONObject
 
 object Forwarder {
+    private fun targetValues(rule: JSONObject, arrayKey: String, legacyKey: String): String {
+        val arr = rule.optJSONArray(arrayKey)
+        val values = mutableListOf<String>()
+        if (arr != null) {
+            for (i in 0 until arr.length()) {
+                val item = arr.optJSONObject(i)
+                val v = if (item != null) item.optString("value", "") else arr.optString(i, "")
+                val clean = v.substringAfterLast("|").trim()
+                if (clean.isNotBlank()) values.add(clean)
+            }
+        }
+        if (values.isNotEmpty()) return values.joinToString("\n")
+        return rule.optString(legacyKey, "").trim()
+    }
+
     fun processIncomingSms(context: Context, sender: String, body: String, time: Long) {
         val matchedRules = RuleMatcher.matchAll(context, sender, body)
         if (matchedRules.isEmpty()) return
@@ -14,8 +29,10 @@ object Forwarder {
     }
 
     private fun processRule(context: Context, sender: String, body: String, time: Long, rule: JSONObject) {
-        val hasSms = rule.optString("smsTarget", "").trim().isNotBlank()
-        val hasEmail = rule.optString("emailTarget", "").trim().isNotBlank()
+        val smsTarget = targetValues(rule, "smsTargets", "smsTarget")
+        val emailTarget = targetValues(rule, "emailTargets", "emailTarget")
+        val hasSms = smsTarget.isNotBlank()
+        val hasEmail = emailTarget.isNotBlank()
         val type = when {
             hasSms && hasEmail -> "both"
             hasSms -> "sms"
@@ -27,7 +44,7 @@ object Forwarder {
         val errors = mutableListOf<String>()
 
         if (hasSms) {
-            val result = SmsForwarder.send(context, rule.optString("smsTarget", ""), body)
+            val result = SmsForwarder.send(context, smsTarget, body)
             if (!result.first) errors.add(result.second)
         }
 
@@ -35,7 +52,7 @@ object Forwarder {
             Thread {
                 val result = EmailForwarder.send(
                     context,
-                    rule.optString("emailTarget", ""),
+                    emailTarget,
                     "Forwarded SMS - ${rule.optString("name", "")}",
                     body
                 )
