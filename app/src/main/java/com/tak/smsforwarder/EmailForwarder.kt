@@ -44,7 +44,6 @@ object EmailForwarder {
                 while (true) {
                     val line = reader.readLine() ?: break
                     lines.add(line)
-
                     if (line.length >= 4 && line[3] == ' ') break
                     if (line.length < 4) break
                 }
@@ -57,9 +56,8 @@ object EmailForwarder {
                 return readResponse()
             }
 
-            fun b64(text: String): String {
-                return Base64.encodeToString(text.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
-            }
+            fun b64(text: String): String =
+                Base64.encodeToString(text.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
 
             val hello = readResponse()
             if (!hello.startsWith("220")) return false to "SMTP اتصال برقرار نشد: $hello"
@@ -84,8 +82,8 @@ object EmailForwarder {
                 .map { it.trim() }
                 .filter { it.isNotBlank() }
 
-            for (t in targets) {
-                val rcpt = cmd("RCPT TO:<$t>")
+            for (target in targets) {
+                val rcpt = cmd("RCPT TO:<$target>")
                 if (!rcpt.startsWith("250") && !rcpt.startsWith("251")) {
                     return false to "ایمیل مقصد پذیرفته نشد: $rcpt"
                 }
@@ -97,7 +95,7 @@ object EmailForwarder {
             val safeSubject = "=?UTF-8?B?${b64(subject)}?="
             val encodedBody = Base64.encodeToString(body.toByteArray(Charsets.UTF_8), Base64.DEFAULT)
 
-            val msg = buildString {
+            val message = buildString {
                 append("From: <$from>\r\n")
                 append("To: ${targets.joinToString(",")}\r\n")
                 append("Subject: $safeSubject\r\n")
@@ -109,7 +107,7 @@ object EmailForwarder {
                 append("\r\n.\r\n")
             }
 
-            writer.write(msg)
+            writer.write(message)
             writer.flush()
 
             val finalResp = readResponse()
@@ -120,14 +118,10 @@ object EmailForwarder {
             } else {
                 false to "ارسال نشد: $finalResp"
             }
-
         } catch (e: Exception) {
             false to "خطای ارسال Email: ${e.message ?: e.javaClass.simpleName}"
         } finally {
-            try {
-                socket?.close()
-            } catch (_: Exception) {
-            }
+            try { socket?.close() } catch (_: Exception) {}
         }
     }
 }

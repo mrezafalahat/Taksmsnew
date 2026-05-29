@@ -149,6 +149,17 @@ class MainActivity : Activity() {
             } catch (_: Exception) { "{}" }
         }
 
+
+        @JavascriptInterface
+        fun connectGmail() {
+            notifyWeb("اتصال واقعی Gmail با OAuth نیاز به Client ID و تنظیمات Google Cloud دارد")
+        }
+
+        @JavascriptInterface
+        fun connectOutlook() {
+            notifyWeb("اتصال واقعی Outlook با OAuth نیاز به Client ID و تنظیمات Microsoft Azure دارد")
+        }
+
         @JavascriptInterface
         fun backupAll() {
             runOnUiThread {
