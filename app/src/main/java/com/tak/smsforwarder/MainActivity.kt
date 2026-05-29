@@ -130,6 +130,7 @@ class MainActivity : Activity() {
         @JavascriptInterface fun getMessages(): String = DataStore.getMessages(this@MainActivity)
         @JavascriptInterface fun clearMessages() = DataStore.clearMessages(this@MainActivity)
         @JavascriptInterface fun deleteMessage(id: String): Boolean = DataStore.deleteMessage(this@MainActivity, id)
+        @JavascriptInterface fun deleteMessageAt(index: Int): Boolean = DataStore.deleteMessageAt(this@MainActivity, index)
 
         @JavascriptInterface fun getSettings(): String = DataStore.getSettings(this@MainActivity)
         @JavascriptInterface fun saveSettings(raw: String): Boolean = DataStore.saveSettings(this@MainActivity, raw)

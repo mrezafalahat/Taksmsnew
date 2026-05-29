@@ -1,15 +1,15 @@
 package com.takpack.smsforwarder
 
 import android.content.Context
-import org.json.JSONArray
 import org.json.JSONObject
 
 object RuleMatcher {
-    private fun normalizePhone(value: String?): String {
-        return normalizeText(value)
+    private fun normalizeNumber(value: String?): String {
+        return (value ?: "")
             .replace(" ", "")
             .replace("-", "")
             .replace("+98", "0")
+            .lowercase()
             .trim()
     }
 
@@ -17,94 +17,83 @@ object RuleMatcher {
         return (value ?: "")
             .replace('ي', 'ی')
             .replace('ك', 'ک')
-            .replace('ة', 'ه')
+            .replace('ى', 'ی')
             .replace('ۀ', 'ه')
+            .replace('ة', 'ه')
             .replace('أ', 'ا')
             .replace('إ', 'ا')
             .replace('آ', 'ا')
-            .replace('۰', '0')
-            .replace('۱', '1')
-            .replace('۲', '2')
-            .replace('۳', '3')
-            .replace('۴', '4')
-            .replace('۵', '5')
-            .replace('۶', '6')
-            .replace('۷', '7')
-            .replace('۸', '8')
-            .replace('۹', '9')
-            .replace('٠', '0')
-            .replace('١', '1')
-            .replace('٢', '2')
-            .replace('٣', '3')
-            .replace('٤', '4')
-            .replace('٥', '5')
-            .replace('٦', '6')
-            .replace('٧', '7')
-            .replace('٨', '8')
-            .replace('٩', '9')
+            .replace("۰", "0").replace("۱", "1").replace("۲", "2").replace("۳", "3").replace("۴", "4")
+            .replace("۵", "5").replace("۶", "6").replace("۷", "7").replace("۸", "8").replace("۹", "9")
+            .replace("٠", "0").replace("١", "1").replace("٢", "2").replace("٣", "3").replace("٤", "4")
+            .replace("٥", "5").replace("٦", "6").replace("٧", "7").replace("٨", "8").replace("٩", "9")
             .lowercase()
             .trim()
     }
 
     private fun compact(value: String?): String {
         return normalizeText(value)
-            .replace(Regex("\\s+"), "")
-            .replace("‌", "")
-            .trim()
+            .replace(Regex("[^\\p{L}\\p{N}]+"), "")
     }
 
-    private fun terms(raw: String?): List<String> {
-        val text = normalizeText(raw)
-        if (text.isBlank() || text == "همه" || text == "all") return emptyList()
-        return text.split("\n", ",", "،", ";", "؛")
-            .map { it.trim() }
-            .filter { it.isNotBlank() && it != "همه" && it != "all" }
-    }
-
-    private fun containsTerm(compactHaystack: String, term: String): Boolean {
-        val c = compact(term)
-        return c.isBlank() || compactHaystack.contains(c)
-    }
-
-    private fun tokenize(value: String?): List<String> {
-        return normalizeText(value)
-            .split(Regex("[^0-9a-zA-Zآ-ی]+"))
-            .map { it.trim() }
+    private fun tokens(value: String?): List<String> {
+        val normalized = normalizeText(value)
+        return Regex("[\\p{L}]+|\\d+")
+            .findAll(normalized)
+            .map { it.value.trim() }
             .filter { it.isNotBlank() }
+            .toList()
     }
 
-    private fun nearMatch(body: String, target: String, nearWordsRaw: String, distance: Int): Boolean {
-        val targetCompact = compact(target)
-        val nearWords = terms(nearWordsRaw).map { compact(it) }.filter { it.isNotBlank() }
-        if (targetCompact.isBlank() || nearWords.isEmpty()) return true
+    private fun parseList(value: String?): List<String> {
+        val raw = (value ?: "").trim()
+        if (raw.isBlank() || raw == "همه" || raw.lowercase() == "all") return emptyList()
+        return raw
+            .split('\n', ',', '،', ';', '؛')
+            .map { it.trim() }
+            .filter { it.isNotBlank() && it != "همه" && it.lowercase() != "all" }
+    }
 
-        val tokens = tokenize(body)
-        if (tokens.isEmpty()) return false
-        val compactTokens = tokens.map { compact(it) }
-        val safeDistance = distance.coerceIn(1, 20)
-
-        val targetIndexes = compactTokens.mapIndexedNotNull { index, token ->
-            if (token.contains(targetCompact)) index else null
-        }
-        if (targetIndexes.isEmpty()) return false
-
-        val nearIndexes = compactTokens.mapIndexedNotNull { index, token ->
-            if (nearWords.any { word -> token.contains(word) || word.contains(token) }) index else null
-        }
-        if (nearIndexes.isEmpty()) return false
-
-        for (ti in targetIndexes) {
-            for (ni in nearIndexes) {
-                if (kotlin.math.abs(ti - ni) <= safeDistance) return true
+    private fun orderedTokensMatch(messageTokens: List<String>, phraseTokens: List<String>): Boolean {
+        if (phraseTokens.isEmpty()) return true
+        var pos = 0
+        for (token in messageTokens) {
+            if (token == phraseTokens[pos]) {
+                pos++
+                if (pos == phraseTokens.size) return true
             }
         }
         return false
     }
 
+    private fun smartPhraseMatch(message: String, phrase: String): Boolean {
+        val phraseCompact = compact(phrase)
+        if (phraseCompact.isBlank()) return true
+
+        val messageCompact = compact(message)
+        if (messageCompact.contains(phraseCompact)) return true
+
+        val phraseTokens = tokens(phrase)
+        if (phraseTokens.isEmpty()) return true
+
+        return orderedTokensMatch(tokens(message), phraseTokens)
+    }
+
+    private fun legacyKeywordsOk(message: String, keywords: String): Boolean {
+        val list = parseList(keywords)
+        if (list.isEmpty()) return true
+        return list.all { smartPhraseMatch(message, it) }
+    }
+
+    private fun smartAnyOk(message: String, smartPhrases: String): Boolean {
+        val list = parseList(smartPhrases)
+        if (list.isEmpty()) return true
+        return list.any { smartPhraseMatch(message, it) }
+    }
+
     fun match(context: Context, sender: String, body: String): JSONObject? {
-        val searchable = "$sender $body"
-        val compactAllText = compact(searchable)
-        val normalizedSender = normalizePhone(sender)
+        val message = "$sender $body"
+        val normalizedSender = normalizeNumber(sender)
         val rules = DataStore.getRulesArray(context)
 
         for (i in 0 until rules.length()) {
@@ -118,38 +107,18 @@ object RuleMatcher {
             } else {
                 for (j in 0 until senders.length()) {
                     val item = senders.optJSONObject(j) ?: continue
-                    val number = normalizePhone(item.optString("number", ""))
+                    val number = normalizeNumber(item.optString("number", ""))
                     if (number.isBlank() || normalizedSender.contains(number) || number.contains(normalizedSender)) {
                         senderOk = true
                         break
                     }
                 }
             }
-            if (!senderOk) continue
 
-            val allKeywordsRaw = when {
-                rule.has("allKeywords") -> rule.optString("allKeywords", "")
-                else -> rule.optString("keywords", "")
-            }
-            val allTerms = terms(allKeywordsRaw)
-            val allOk = allTerms.isEmpty() || allTerms.all { containsTerm(compactAllText, it) }
-            if (!allOk) continue
+            val keywordsOk = legacyKeywordsOk(message, rule.optString("keywords", ""))
+            val smartOk = smartAnyOk(message, rule.optString("smartPhrases", ""))
 
-            val anyTerms = terms(rule.optString("anyKeywords", ""))
-            val anyOk = anyTerms.isEmpty() || anyTerms.any { containsTerm(compactAllText, it) }
-            if (!anyOk) continue
-
-            val notTerms = terms(rule.optString("notKeywords", ""))
-            val notOk = notTerms.none { containsTerm(compactAllText, it) }
-            if (!notOk) continue
-
-            val nearTarget = rule.optString("nearTarget", "").trim()
-            val nearKeywords = rule.optString("nearKeywords", "").trim()
-            val nearDistance = rule.optInt("nearDistance", 3)
-            val nearOk = nearMatch(body, nearTarget, nearKeywords, nearDistance)
-            if (!nearOk) continue
-
-            return rule
+            if (senderOk && keywordsOk && smartOk) return rule
         }
 
         return null
@@ -157,11 +126,11 @@ object RuleMatcher {
 
     fun senderNote(rule: JSONObject?, sender: String): String {
         if (rule == null) return ""
-        val ns = normalizePhone(sender)
+        val ns = normalizeNumber(sender)
         val senders = rule.optJSONArray("senders") ?: return ""
         for (i in 0 until senders.length()) {
             val item = senders.optJSONObject(i) ?: continue
-            val n = normalizePhone(item.optString("number", ""))
+            val n = normalizeNumber(item.optString("number", ""))
             if (n.isBlank() || ns.contains(n) || n.contains(ns)) return item.optString("note", "")
         }
         return ""

@@ -133,9 +133,27 @@ object DataStore {
         return try {
             val old = getMessagesArray(context)
             val next = JSONArray()
+            var removed = false
             for (i in 0 until old.length()) {
                 val item = old.getJSONObject(i)
-                if (item.optString("id") != id) next.put(item)
+                if (!removed && id.isNotBlank() && item.optString("id") == id) {
+                    removed = true
+                } else {
+                    next.put(item)
+                }
+            }
+            sp(context).edit().putString(MESSAGES, next.toString()).apply()
+            removed
+        } catch (_: Exception) { false }
+    }
+
+    fun deleteMessageAt(context: Context, index: Int): Boolean {
+        return try {
+            val old = getMessagesArray(context)
+            if (index < 0 || index >= old.length()) return false
+            val next = JSONArray()
+            for (i in 0 until old.length()) {
+                if (i != index) next.put(old.getJSONObject(i))
             }
             sp(context).edit().putString(MESSAGES, next.toString()).apply()
             true
