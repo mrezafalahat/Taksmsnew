@@ -64,10 +64,11 @@ object RuleMatcher {
 
     fun forwardTarget(rule: JSONObject?): String {
         if (rule == null) return ""
-        return when (rule.optString("forwardType", "history")) {
-            "sms" -> rule.optString("smsTarget", "")
-            "email" -> rule.optString("emailTarget", "")
-            else -> "History"
-        }
+        val sms = rule.optString("smsTarget", "").trim()
+        val email = rule.optString("emailTarget", "").trim()
+        val parts = mutableListOf<String>()
+        if (sms.isNotBlank()) parts.add("SMS: $sms")
+        if (email.isNotBlank()) parts.add("Email: $email")
+        return if (parts.isEmpty()) "History" else parts.joinToString(" | ")
     }
 }

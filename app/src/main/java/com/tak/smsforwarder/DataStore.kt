@@ -25,6 +25,17 @@ object DataStore {
 
     fun getRules(context: Context): String = getRulesArray(context).toString()
 
+    private fun inferForwardType(rule: JSONObject): String {
+        val hasSms = rule.optString("smsTarget", "").trim().isNotBlank()
+        val hasEmail = rule.optString("emailTarget", "").trim().isNotBlank()
+        return when {
+            hasSms && hasEmail -> "both"
+            hasSms -> "sms"
+            hasEmail -> "email"
+            else -> "history"
+        }
+    }
+
     fun saveRule(context: Context, rawRule: String): Boolean {
         return try {
             val rule = JSONObject(rawRule)
@@ -35,7 +46,7 @@ object DataStore {
             }
             if (!rule.has("enabled")) rule.put("enabled", true)
             if (!rule.has("senders")) rule.put("senders", JSONArray())
-            if (!rule.has("forwardType")) rule.put("forwardType", "history")
+            rule.put("forwardType", inferForwardType(rule))
 
             val old = getRulesArray(context)
             val next = JSONArray()
@@ -118,19 +129,32 @@ object DataStore {
         sp(context).edit().putString(MESSAGES, "[]").apply()
     }
 
-    fun addMessage(context: Context, sender: String, body: String, time: Long, rule: JSONObject?, status: String, error: String) {
+    fun deleteMessage(context: Context, id: String): Boolean {
+        return try {
+            val old = getMessagesArray(context)
+            val next = JSONArray()
+            for (i in 0 until old.length()) {
+                val item = old.getJSONObject(i)
+                if (item.optString("id") != id) next.put(item)
+            }
+            sp(context).edit().putString(MESSAGES, next.toString()).apply()
+            true
+        } catch (_: Exception) { false }
+    }
+
+    fun addMessage(context: Context, sender: String, body: String, time: Long, rule: JSONObject, status: String, error: String) {
         try {
             val old = getMessagesArray(context)
             val next = JSONArray()
             val msg = JSONObject()
-            msg.put("id", System.currentTimeMillis().toString())
+            msg.put("id", System.currentTimeMillis().toString() + "_" + kotlin.random.Random.nextInt(1000, 9999))
             msg.put("sender", sender)
             msg.put("body", body)
             msg.put("time", time)
-            msg.put("ruleId", rule?.optString("id", "") ?: "")
-            msg.put("ruleName", rule?.optString("name", "بدون فیلتر") ?: "بدون فیلتر")
+            msg.put("ruleId", rule.optString("id", ""))
+            msg.put("ruleName", rule.optString("name", "بدون نام"))
             msg.put("senderNote", RuleMatcher.senderNote(rule, sender))
-            msg.put("forwardType", rule?.optString("forwardType", "history") ?: "history")
+            msg.put("forwardType", rule.optString("forwardType", "history"))
             msg.put("forwardTarget", RuleMatcher.forwardTarget(rule))
             msg.put("status", status)
             msg.put("error", error)
@@ -139,5 +163,34 @@ object DataStore {
             for (i in 0 until limit) next.put(old.getJSONObject(i))
             sp(context).edit().putString(MESSAGES, next.toString()).apply()
         } catch (_: Exception) {}
+    }
+
+    fun exportAll(context: Context): String {
+        return JSONObject()
+            .put("app", "TAK SMS Forwarder")
+            .put("version", 1)
+            .put("createdAt", System.currentTimeMillis())
+            .put("rules", getRulesArray(context))
+            .put("messages", getMessagesArray(context))
+            .put("settings", getSettingsObject(context))
+            .put("enabled", isEnabled(context))
+            .toString(2)
+    }
+
+    fun importAll(context: Context, raw: String): Boolean {
+        return try {
+            val obj = JSONObject(raw)
+            val rules = obj.optJSONArray("rules") ?: JSONArray()
+            val messages = obj.optJSONArray("messages") ?: JSONArray()
+            val settings = obj.optJSONObject("settings") ?: JSONObject()
+            val enabled = obj.optBoolean("enabled", true)
+            sp(context).edit()
+                .putString(RULES, rules.toString())
+                .putString(MESSAGES, messages.toString())
+                .putString(SETTINGS, settings.toString())
+                .putBoolean(ENABLED, enabled)
+                .apply()
+            true
+        } catch (_: Exception) { false }
     }
 }

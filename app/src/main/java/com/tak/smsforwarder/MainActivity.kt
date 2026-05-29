@@ -18,6 +18,8 @@ import org.json.JSONObject
 
 class MainActivity : Activity() {
     private lateinit var webView: WebView
+    private val backupCreateCode = 3001
+    private val backupOpenCode = 3002
 
     @SuppressLint("SetJavaScriptEnabled", "AddJavascriptInterface")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,6 +63,38 @@ class MainActivity : Activity() {
         return pm.isIgnoringBatteryOptimizations(packageName)
     }
 
+    private fun notifyWeb(message: String) {
+        runOnUiThread {
+            val safe = JSONObject.quote(message)
+            webView.evaluateJavascript("window.App && App.nativeToast && App.nativeToast($safe); window.App && App.refresh && App.refresh();", null)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode != RESULT_OK || data?.data == null) return
+        val uri = data.data ?: return
+        when (requestCode) {
+            backupCreateCode -> {
+                try {
+                    contentResolver.openOutputStream(uri)?.use { out ->
+                        out.write(DataStore.exportAll(this).toByteArray(Charsets.UTF_8))
+                    }
+                    notifyWeb("بکاپ ذخیره شد")
+                } catch (e: Exception) { notifyWeb(e.message ?: "خطای ذخیره بکاپ") }
+            }
+            backupOpenCode -> {
+                try {
+                    val raw = contentResolver.openInputStream(uri)?.use { input ->
+                        input.readBytes().toString(Charsets.UTF_8)
+                    } ?: ""
+                    val ok = DataStore.importAll(this, raw)
+                    notifyWeb(if (ok) "بکاپ بازیابی شد" else "فایل بکاپ معتبر نیست")
+                } catch (e: Exception) { notifyWeb(e.message ?: "خطای بازیابی بکاپ") }
+            }
+        }
+    }
+
     inner class AndroidBridge {
         @JavascriptInterface fun hasSmsPermission(): Boolean = hasPermission(Manifest.permission.RECEIVE_SMS) && hasPermission(Manifest.permission.READ_SMS)
         @JavascriptInterface fun hasSendSmsPermission(): Boolean = hasPermission(Manifest.permission.SEND_SMS)
@@ -95,6 +129,7 @@ class MainActivity : Activity() {
 
         @JavascriptInterface fun getMessages(): String = DataStore.getMessages(this@MainActivity)
         @JavascriptInterface fun clearMessages() = DataStore.clearMessages(this@MainActivity)
+        @JavascriptInterface fun deleteMessage(id: String): Boolean = DataStore.deleteMessage(this@MainActivity, id)
 
         @JavascriptInterface fun getSettings(): String = DataStore.getSettings(this@MainActivity)
         @JavascriptInterface fun saveSettings(raw: String): Boolean = DataStore.saveSettings(this@MainActivity, raw)
@@ -114,27 +149,26 @@ class MainActivity : Activity() {
         }
 
         @JavascriptInterface
-        fun testSmsForward(target: String): String {
-            val result = SmsForwarder.send(this@MainActivity, target, "TAK SMS Forwarder test message")
-            return JSONObject().put("ok", result.first).put("message", result.second).toString()
+        fun backupAll() {
+            runOnUiThread {
+                val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "application/json"
+                    putExtra(Intent.EXTRA_TITLE, "tak_sms_backup.json")
+                }
+                startActivityForResult(intent, backupCreateCode)
+            }
         }
 
         @JavascriptInterface
-        fun testEmailForward(target: String): String {
-            var response = JSONObject().put("ok", false).put("message", "در حال ارسال تست Email...").toString()
-            val lock = Object()
-            Thread {
-                val result = EmailForwarder.send(this@MainActivity, target, "TAK SMS Forwarder Test", "This is a test email from TAK SMS Forwarder.")
-                response = JSONObject().put("ok", result.first).put("message", result.second).toString()
-                synchronized(lock) { lock.notify() }
-            }.start()
-            synchronized(lock) { try { lock.wait(15000) } catch (_: Exception) {} }
-            return response
-        }
-
-        @JavascriptInterface
-        fun addTestIncomingSms() {
-            Forwarder.processIncomingSms(this@MainActivity, "0098100099", "کد تایید بانک ملت 12345 است.", System.currentTimeMillis())
+        fun restoreAll() {
+            runOnUiThread {
+                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "application/json"
+                }
+                startActivityForResult(intent, backupOpenCode)
+            }
         }
     }
 
