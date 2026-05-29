@@ -48,6 +48,7 @@ button,input,textarea,select{font-family:inherit}
 @media(min-width:900px){body{padding:24px}.app{height:860px;min-height:860px;border-radius:34px;box-shadow:0 30px 90px #0f172a2b}.content{height:calc(860px - 78px)}}
 
 .history-head{display:flex;gap:10px;margin-bottom:14px}.history-head .btn{height:44px;border-radius:16px;font-size:13px}
+.confirm-mask{position:absolute;inset:0;background:rgba(15,23,42,.35);z-index:60;display:none;align-items:center;justify-content:center;padding:24px}.confirm-box{width:100%;max-width:340px;background:#fff;border-radius:24px;border:1px solid var(--line);box-shadow:var(--shadow2);padding:20px;text-align:center}.confirm-title{font-size:18px;font-weight:900;margin-bottom:8px}.confirm-text{font-size:13px;color:var(--muted);line-height:2;margin-bottom:18px}.confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 </style>
 </head>
 
@@ -111,13 +112,23 @@ button,input,textarea,select{font-family:inherit}
     </div>
 
     <div class="settings-card card">
-      <div class="settings-title">تنظیمات Email / SMTP</div>
+      <div class="settings-title">اتصال ایمیل</div>
+      <div class="settings-sub" style="margin:8px 0 14px">روش امن و حرفه‌ای، اتصال Gmail/Outlook با OAuth است. برای فعال شدن واقعی، باید Client ID و تنظیمات Google/Microsoft داخل پروژه اضافه شود.</div>
+      <div class="btns" style="margin-top:0">
+        <button class="btn primary" id="connectGmailBtn">اتصال Gmail</button>
+        <button class="btn" id="connectOutlookBtn">اتصال Outlook</button>
+      </div>
+    </div>
+
+    <div class="settings-card card">
+      <div class="settings-title">روش دستی Email / SMTP</div>
+      <div class="settings-sub" style="margin:8px 0 14px">تا زمانی که OAuth واقعی تنظیم نشده، ارسال ایمیل با این تنظیمات دستی انجام می‌شود.</div>
       <div class="field"><div class="label">SMTP Host</div><input class="input ltr" id="smtpHost" placeholder="smtp.gmail.com"></div>
       <div class="field"><div class="label">SMTP Port</div><input class="input ltr" id="smtpPort" placeholder="465"></div>
       <div class="field"><div class="label">SMTP Username</div><input class="input ltr" id="smtpUsername" placeholder="your@email.com"></div>
       <div class="field"><div class="label">SMTP Password / App Password</div><input class="input ltr" id="smtpPassword" placeholder="password" type="password"></div>
       <div class="field"><div class="label">From Email</div><input class="input ltr" id="smtpFrom" placeholder="your@email.com"></div>
-      <button class="btn primary" id="saveSettingsBtn" style="width:100%">ذخیره تنظیمات</button>
+      <button class="btn primary" id="saveSettingsBtn" style="width:100%">ذخیره تنظیمات دستی</button>
     </div>
   </div>
 
@@ -127,13 +138,23 @@ button,input,textarea,select{font-family:inherit}
 <button class="fab" id="fab">+</button>
 
 <nav class="nav">
-  <button data-page="settings">تنظیمات</button>
-  <button data-page="history">پیام‌ها</button>
-  <button data-page="filters">فیلترها</button>
   <button data-page="dashboard" class="active">داشبورد</button>
+  <button data-page="filters">فیلترها</button>
+  <button data-page="history">پیام‌ها</button>
+  <button data-page="settings">تنظیمات</button>
 </nav>
 
 <div class="toast" id="toast"></div>
+<div class="confirm-mask" id="confirmMask">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirmTitle">تأیید حذف</div>
+    <div class="confirm-text" id="confirmText">آیا مطمئن هستید؟</div>
+    <div class="confirm-actions">
+      <button class="btn" id="confirmCancel">انصراف</button>
+      <button class="btn danger" id="confirmOk">حذف</button>
+    </div>
+  </div>
+</div>
 </main>
 
 <script>
@@ -143,9 +164,58 @@ let rules=[], messages=[], settings={}, statusObj={};
 const $=id=>document.getElementById(id);
 const bridge=()=>window.AndroidBridge||null;
 
+const DRAFT_KEY='tak_form_draft_v8';
+const SETTINGS_DRAFT_KEY='tak_settings_draft_v8';
+function saveFormDraft(){
+  try{ localStorage.setItem(DRAFT_KEY, JSON.stringify({step,editingId,form})); }catch(e){}
+}
+function clearFormDraft(){ try{localStorage.removeItem(DRAFT_KEY)}catch(e){} }
+function restoreFormDraft(){
+  try{
+    const raw=localStorage.getItem(DRAFT_KEY); if(!raw)return;
+    const d=JSON.parse(raw);
+    if(d && d.form && !editingId){ step=d.step||1; editingId=d.editingId||''; form=d.form; }
+  }catch(e){}
+}
+function getSettingsDraft(){try{return JSON.parse(localStorage.getItem(SETTINGS_DRAFT_KEY)||'{}')}catch(e){return {}}}
+function saveSettingsDraft(){
+  try{
+    const s={smtpHost:$('smtpHost')?.value||'',smtpPort:$('smtpPort')?.value||'',smtpUsername:$('smtpUsername')?.value||'',smtpPassword:$('smtpPassword')?.value||'',smtpFrom:$('smtpFrom')?.value||''};
+    localStorage.setItem(SETTINGS_DRAFT_KEY,JSON.stringify(s));
+  }catch(e){}
+}
+function clearSettingsDraft(){try{localStorage.removeItem(SETTINGS_DRAFT_KEY)}catch(e){}}
+function bindDraftInputs(){
+  document.querySelectorAll('input,textarea,select').forEach(el=>{
+    if(el.dataset.draftBound==='1')return;
+    el.dataset.draftBound='1';
+    el.addEventListener('input',()=>{
+      if($('wizard')?.classList.contains('active')){ try{readStep();saveFormDraft()}catch(e){} }
+      if($('settings')?.classList.contains('active')) saveSettingsDraft();
+    });
+    el.addEventListener('change',()=>{
+      if($('wizard')?.classList.contains('active')){ try{readStep();saveFormDraft()}catch(e){} }
+      if($('settings')?.classList.contains('active')) saveSettingsDraft();
+    });
+  });
+}
+window.addEventListener('pagehide',()=>{try{readStep();saveFormDraft();saveSettingsDraft()}catch(e){}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){try{readStep();saveFormDraft();saveSettingsDraft()}catch(e){}}});
+
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function fa(n){return String(n).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d])}
 function toast(t){$('toast').textContent=t;$('toast').style.display='flex';clearTimeout(window.tt);window.tt=setTimeout(()=>$('toast').style.display='none',1800)}
+let confirmCallback=null;
+function askConfirm(title,text,onOk){
+  confirmCallback=onOk;
+  $('confirmTitle').textContent=title||'تأیید';
+  $('confirmText').textContent=text||'آیا مطمئن هستید؟';
+  $('confirmMask').style.display='flex';
+}
+function closeConfirm(){
+  $('confirmMask').style.display='none';
+  confirmCallback=null;
+}
 function inferForwardType(){
   const hasSms=!!(form.smsTarget||'').trim();
   const hasEmail=!!(form.emailTarget||'').trim();
@@ -185,6 +255,7 @@ function readStep(){
   form.forwardType=inferForwardType();
   form.enabled=true;
  }
+ saveFormDraft();
 }
 function show(page){
  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -199,12 +270,13 @@ function show(page){
  if(page==='settings'){ $('title').textContent='تنظیمات'; $('subTitle').textContent='SMS و Email'; refresh(); renderSettings();}
  if(page==='messageDetail'){ $('title').textContent='جزئیات پیام'; $('subTitle').textContent='متن و وضعیت ارسال'; renderMessageDetail();}
 }
-function resetForm(){step=1;editingId="";form={name:"",type:"OTP",senders:[{number:"",note:""}],keywords:"همه",smartPhrases:"",forwardType:"history",smsTarget:"",emailTarget:"",enabled:true}}
+function resetForm(){step=1;editingId="";form={name:"",type:"OTP",senders:[{number:"",note:""}],keywords:"همه",smartPhrases:"",forwardType:"history",smsTarget:"",emailTarget:"",enabled:true};saveFormDraft()}
 function editRule(id){
  const r=rules.find(x=>x.id===id); if(!r)return;
  editingId=r.id; step=1; form=JSON.parse(JSON.stringify(r));
  if(!form.senders||!form.senders.length)form.senders=[{number:"",note:""}];
  form.smsTarget=form.smsTarget||''; form.emailTarget=form.emailTarget||''; form.smartPhrases=form.smartPhrases||''; form.enabled = r.enabled !== false; form.forwardType=inferForwardType();
+ saveFormDraft();
  show('wizard')
 }
 function renderStep(){
@@ -214,10 +286,12 @@ function renderStep(){
  let h='';
  if(step===1) h=`<div class="field"><div class="label">نام فیلتر</div><input class="input" id="fName" value="${esc(form.name)}" placeholder="مثلاً بانک‌ها"></div><div class="field"><div class="label">نوع فیلتر</div><input class="input" id="fType" value="${esc(form.type)}" placeholder="OTP / بانک / تبلیغات"></div>`;
  if(step===2) h=`<div class="field"><div class="label">شماره‌های فرستنده</div><div style="font-size:12px;color:#8b94a7;line-height:1.9;margin-bottom:12px">هر شماره جدا داخل یک کارت ثبت می‌شود و توضیح جدا می‌گیرد.</div><div id="sendersBox"></div><button class="add-number" id="addNumberBtn">+ افزودن شماره جدید</button></div><div class="field"><div class="label">شرط‌های عمومی - همه باید باشند</div><textarea class="input textarea" id="fKeywords" placeholder="مثلاً: بانک صنعت و معدن">${esc(form.keywords)}</textarea></div><div class="field"><div class="label">عبارت‌های هوشمند - یکی کافی است</div><textarea class="input textarea" id="fSmartPhrases" placeholder="مثلاً هر خط یک عبارت:&#10;برداشت از 58004&#10;واریز به 58004">${esc(form.smartPhrases||'')}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">فاصله، دو نقطه، خط تیره، ي/ی، ك/ک و عدد فارسی/انگلیسی نادیده گرفته می‌شود. کلمات باید به همین ترتیب در پیام باشند.</div></div>`;
- if(step===3) h=`<div class="field"><div class="label">شماره مقصد SMS</div><input class="input ltr" id="fSmsTarget" value="${esc(form.smsTarget)}" placeholder="0912..."></div><div class="field"><div class="label">ایمیل مقصد</div><input class="input ltr" id="fEmailTarget" value="${esc(form.emailTarget)}" placeholder="example@email.com"></div>`;
+ if(step===3) h=`<div class="field"><div class="label">شماره‌های مقصد SMS</div><textarea class="input textarea ltr" id="fSmsTarget" placeholder="هر شماره در یک خط یا با , جدا شود">${esc(form.smsTarget)}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">برای چند شماره، هر شماره را در یک خط بنویس.</div></div><div class="field"><div class="label">ایمیل‌های مقصد</div><textarea class="input textarea ltr" id="fEmailTarget" placeholder="هر ایمیل در یک خط یا با , جدا شود">${esc(form.emailTarget)}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">برای چند ایمیل، هر ایمیل را در یک خط بنویس.</div></div>`;
  if(step===4){ form.forwardType=inferForwardType(); h=`<div class="card summary"><div style="font-size:22px;font-weight:900;margin-bottom:20px">خلاصه</div><div class="sumrow"><div class="k">نام</div><div class="v">${esc(form.name)}</div></div><div class="sumrow"><div class="k">شماره‌ها</div><div class="v">${numberSummary()}</div></div><div class="sumrow"><div class="k">کلمات</div><div class="v">${esc(form.keywords||'همه')}</div></div><div class="sumrow"><div class="k">عبارت هوشمند</div><div class="v">${esc(form.smartPhrases||'ندارد')}</div></div><div class="sumrow"><div class="k">ارسال</div><div class="v">${esc(forwardLabel(form.forwardType))}</div></div><div class="sumrow"><div class="k">مقصد</div><div class="v">${destinationSummary()}</div></div></div>`}
  $('stepBox').innerHTML=h;
  if(step===2) renderSenderCards();
+ bindDraftInputs();
+ saveFormDraft();
 }
 function numberSummary(){
  if(!form.senders.length)return '<span class="num-pill"><b>همه شماره‌ها</b><span>بدون محدودیت فرستنده</span></span>';
@@ -228,6 +302,8 @@ function renderSenderCards(){
  $('sendersBox').innerHTML=form.senders.map((x,i)=>`<div class="card sender-card"><div class="sender-grid"><div><div class="label">شماره ${fa(i+1)}</div><input class="input ltr sender-number" value="${esc(x.number)}" placeholder="0098100099 یا MALIAT"></div><div><div class="label">توضیح این شماره</div><input class="input sender-note" value="${esc(x.note)}" placeholder="مثلاً بانک ملت، مالیات، حسابداری"></div></div><button class="smallbtn" data-del="${i}">حذف این شماره</button></div>`).join('');
  document.querySelectorAll('[data-del]').forEach(btn=>btn.onclick=()=>{readStep();form.senders.splice(+btn.dataset.del,1);if(!form.senders.length)form.senders.push({number:"",note:""});renderStep()});
  $('addNumberBtn').onclick=()=>{readStep();form.senders.push({number:"",note:""});renderStep()};
+ bindDraftInputs();
+ saveFormDraft();
 }
 function saveRule(){
  readStep();
@@ -238,7 +314,7 @@ function saveRule(){
  const rule={id:editingId,name:form.name,type:form.type,senders:form.senders,keywords:form.keywords,smartPhrases:form.smartPhrases||'',forwardType:form.forwardType,smsTarget:form.smsTarget,emailTarget:form.emailTarget,enabled:form.enabled!==false};
  let ok=false;
  if(bridge()) ok=bridge().saveRule(JSON.stringify(rule)); else{let arr=JSON.parse(localStorage.getItem('rules')||'[]');if(!rule.id)rule.id=String(Date.now());let idx=arr.findIndex(x=>x.id===rule.id);if(idx>=0)arr[idx]=rule;else arr.push(rule);localStorage.setItem('rules',JSON.stringify(arr));ok=true}
- if(ok){toast('فیلتر ذخیره شد');resetForm();refresh();show('filters')}else toast('ذخیره نشد');
+ if(ok){toast('فیلتر ذخیره شد');clearFormDraft();resetForm();refresh();show('filters')}else toast('ذخیره نشد');
 }
 function refresh(){
  if(bridge()){try{rules=JSON.parse(bridge().getRules()||'[]');messages=JSON.parse(bridge().getMessages()||'[]');settings=JSON.parse(bridge().getSettings()||'{}');statusObj=JSON.parse(bridge().getStatus()||'{}')}catch(e){statusObj={}}}
@@ -259,7 +335,13 @@ function renderSettings(){
  $('settingsServiceToggle').classList.toggle('on',on);
  $('settingsServiceAvatar').textContent=on?'ON':'OFF';
  $('batterySub').textContent=statusObj.battery?'Battery روی Unrestricted است':'برای کار پس‌زمینه روی Unrestricted بگذار.';
- $('smtpHost').value=settings.smtpHost||''; $('smtpPort').value=settings.smtpPort||'465'; $('smtpUsername').value=settings.smtpUsername||''; $('smtpPassword').value=settings.smtpPassword||''; $('smtpFrom').value=settings.smtpFrom||'';
+ const d=getSettingsDraft();
+ $('smtpHost').value=(d.smtpHost!==undefined?d.smtpHost:(settings.smtpHost||''));
+ $('smtpPort').value=(d.smtpPort!==undefined?d.smtpPort:(settings.smtpPort||'465'));
+ $('smtpUsername').value=(d.smtpUsername!==undefined?d.smtpUsername:(settings.smtpUsername||''));
+ $('smtpPassword').value=(d.smtpPassword!==undefined?d.smtpPassword:(settings.smtpPassword||''));
+ $('smtpFrom').value=(d.smtpFrom!==undefined?d.smtpFrom:(settings.smtpFrom||''));
+ bindDraftInputs();
 }
 function ruleDest(r){
  const rows=[];
@@ -272,9 +354,9 @@ function renderRules(){
  $('rulesList').innerHTML=rules.map((r,i)=>{const nums=(r.senders||[]).map(x=>`<span class="ltr">${esc(x.number||'همه')}</span> - ${esc(x.note||'بدون توضیح')}`).join('<br>');const f=(r.smsTarget&&r.emailTarget)?'both':(r.smsTarget?'sms':(r.emailTarget?'email':'history'));const on=r.enabled!==false;return `<div class="card row rule-card ${on?'':'off'}"><div class="rule-num">${fa(i+1)}</div><div class="body"><div class="rt">${esc(r.name)}</div><div class="rs">${nums||'همه شماره‌ها'} · ${forwardLabel(f)}</div><div class="rs">${ruleDest(r)}</div>${r.smartPhrases?`<div class="rs">عبارت: ${esc(r.smartPhrases).replace(/\n/g,' / ')}</div>`:''}<div class="rule-actions"><button class="rule-action edit" data-id="${r.id}">ویرایش</button><button class="rule-action danger askdel" data-id="${r.id}">حذف</button><div class="toggle ${on?'on':''}" data-toggle-rule="${r.id}"></div></div><div class="confirm-delete" id="confirm-${r.id}"><button class="rule-action cancel-del" data-id="${r.id}">انصراف</button><button class="rule-action danger del" data-id="${r.id}">حذف قطعی</button></div><div style="margin-top:8px"><span class="tag ${on?'':'gray'}">${on?'فعال':'غیرفعال'}</span></div></div></div>`}).join('');
  document.querySelectorAll('.edit').forEach(b=>b.onclick=()=>editRule(b.dataset.id));
  document.querySelectorAll('[data-toggle-rule]').forEach(t=>t.onclick=()=>{const id=t.dataset.toggleRule;const r=rules.find(x=>x.id===id);const next=!(r&&r.enabled!==false);if(bridge())bridge().toggleRule(id,next);else{rules=rules.map(x=>x.id===id?{...x,enabled:next}:x);localStorage.setItem('rules',JSON.stringify(rules))}refresh();renderRules();toast(next?'فیلتر فعال شد':'فیلتر غیرفعال شد')});
- document.querySelectorAll('.askdel').forEach(b=>b.onclick=()=>{$('confirm-'+b.dataset.id)?.classList.add('show')});
+ document.querySelectorAll('.askdel').forEach(b=>b.onclick=()=>askConfirm('حذف فیلتر','آیا از حذف این فیلتر مطمئن هستید؟',()=>{if(bridge())bridge().deleteRule(b.dataset.id);else localStorage.setItem('rules',JSON.stringify(rules.filter(x=>x.id!==b.dataset.id)));refresh();renderRules();toast('حذف شد')}));
  document.querySelectorAll('.cancel-del').forEach(b=>b.onclick=()=>{$('confirm-'+b.dataset.id)?.classList.remove('show')});
- document.querySelectorAll('.del').forEach(b=>b.onclick=()=>{if(bridge())bridge().deleteRule(b.dataset.id);else localStorage.setItem('rules',JSON.stringify(rules.filter(x=>x.id!==b.dataset.id)));refresh();renderRules();toast('حذف شد')});
+ document.querySelectorAll('.del').forEach(b=>b.onclick=()=>askConfirm('حذف فیلتر','آیا از حذف این فیلتر مطمئن هستید؟',()=>{if(bridge())bridge().deleteRule(b.dataset.id);else localStorage.setItem('rules',JSON.stringify(rules.filter(x=>x.id!==b.dataset.id)));refresh();renderRules();toast('حذف شد')}));
 }
 function deleteMessageByIndex(i){
  const m=messages[i]; if(!m)return;
@@ -300,24 +382,24 @@ function clearHistoryNow(){
 function renderMessages(){
  if(!messages.length){$('messagesList').innerHTML='<div class="card empty"><div class="empty-title">هیچ پیامی دریافت نشده است</div></div>';return}
  $('messagesList').innerHTML=`<div class="history-head"><button class="btn danger" id="clearHistoryBtn">حذف همه History</button></div>`+messages.map((m,i)=>`<div class="card row msg" data-i="${i}"><div class="avatar">SMS</div><div class="body"><div class="rt ltr">${esc(m.sender)}</div><div class="rs">فیلتر: ${esc(m.ruleName||'بدون نام')}</div><div class="rs">${esc(m.body)}</div><div class="rs">وضعیت: ${esc(m.status||'')}</div></div><div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start"><span class="tag">${esc(forwardLabel(m.forwardType||''))}</span><button class="rule-action danger delmsg" data-i="${i}">حذف</button></div></div>`).join('');
- $('clearHistoryBtn').onclick=()=>clearHistoryNow();
- document.querySelectorAll('.delmsg').forEach(b=>b.onclick=(ev)=>{ev.stopPropagation();deleteMessageByIndex(+b.dataset.i)});
+ $('clearHistoryBtn').onclick=()=>askConfirm('حذف همه History','همه پیام‌ها حذف شوند؟',clearHistoryNow);
+ document.querySelectorAll('.delmsg').forEach(b=>b.onclick=(ev)=>{ev.stopPropagation();const i=+b.dataset.i;askConfirm('حذف پیام','این پیام حذف شود؟',()=>deleteMessageByIndex(i));});
  document.querySelectorAll('.msg').forEach(x=>x.onclick=()=>{detailMessage=messages[+x.dataset.i];detailMessage._index=+x.dataset.i;show('messageDetail')});
 }
 function renderMessageDetail(){
  const m=detailMessage;if(!m){$('messageDetailBox').innerHTML='';return}
  $('messageDetailBox').innerHTML=`<div class="card summary"><div style="font-size:22px;font-weight:900;margin-bottom:18px" class="ltr">${esc(m.sender)}</div><div class="sumrow"><div class="k">فیلتر</div><div class="v">${esc(m.ruleName)}</div></div><div class="sumrow"><div class="k">ارسال</div><div class="v">${esc(m.status)}</div></div><div class="sumrow"><div class="k">مقصد</div><div class="v ltr">${esc(m.forwardTarget)}</div></div><div class="sumrow"><div class="k">خطا</div><div class="v">${esc(m.error)}</div></div><div style="line-height:2;margin-top:18px">${esc(m.body)}</div><button class="btn danger" id="deleteMessageBtn" style="width:100%;margin-top:18px">حذف این پیام</button></div>`;
- $('deleteMessageBtn').onclick=()=>{const idx=typeof m._index==='number'?m._index:messages.findIndex(x=>x.id&&x.id===m.id); if(idx>=0) deleteMessageByIndex(idx); else {if(bridge()&&m.id)bridge().deleteMessage(m.id);else localStorage.setItem('messages',JSON.stringify(messages.filter(x=>x.id!==m.id)));refresh();toast('پیام حذف شد')} detailMessage=null;show('history')};
+ $('deleteMessageBtn').onclick=()=>askConfirm('حذف پیام','این پیام حذف شود؟',()=>{const idx=typeof m._index==='number'?m._index:messages.findIndex(x=>x.id&&x.id===m.id); if(idx>=0) deleteMessageByIndex(idx); else {if(bridge()&&m.id)bridge().deleteMessage(m.id);else localStorage.setItem('messages',JSON.stringify(messages.filter(x=>x.id!==m.id)));refresh();toast('پیام حذف شد')} detailMessage=null;show('history')});
 }
 function saveSettings(){
  const s={smtpHost:$('smtpHost').value.trim(),smtpPort:$('smtpPort').value.trim()||'465',smtpUsername:$('smtpUsername').value.trim(),smtpPassword:$('smtpPassword').value.trim(),smtpFrom:$('smtpFrom').value.trim()};
- let ok=false;if(bridge())ok=bridge().saveSettings(JSON.stringify(s));else{localStorage.setItem('settings',JSON.stringify(s));ok=true}toast(ok?'تنظیمات ذخیره شد':'ذخیره نشد');refresh();
+ let ok=false;if(bridge())ok=bridge().saveSettings(JSON.stringify(s));else{localStorage.setItem('settings',JSON.stringify(s));ok=true}if(ok)clearSettingsDraft();toast(ok?'تنظیمات ذخیره شد':'ذخیره نشد');refresh();
 }
 function backupAll(){if(bridge())bridge().backupAll();else toast('بکاپ داخل اپ اندروید کار می‌کند')}
 function restoreAll(){if(bridge())bridge().restoreAll();else toast('بازیابی داخل اپ اندروید کار می‌کند')}
 function toggleService(on){if(bridge())bridge().setEnabled(on);statusObj.enabled=on;toast(on?'سرویس روشن شد':'سرویس خاموش شد');refresh();const active=document.querySelector('.screen.active')?.id;if(active==='dashboard')renderDashboard();if(active==='settings')renderSettings();}
-$('nextBtn').onclick=()=>{readStep();if(step<4){step++;renderStep()}else saveRule()};
-$('backBtn').onclick=()=>{readStep();if(step>1){step--;renderStep()}};
+$('nextBtn').onclick=()=>{readStep();saveFormDraft();if(step<4){step++;renderStep()}else saveRule()};
+$('backBtn').onclick=()=>{readStep();saveFormDraft();if(step>1){step--;renderStep()}};
 $('fab').onclick=()=>{resetForm();show('wizard')}; $('goAddFromDash').onclick=()=>{resetForm();show('wizard')};
 $('dashServiceToggle').onclick=()=>toggleService(!$('dashServiceToggle').classList.contains('on'));
 $('settingsServiceToggle').onclick=()=>toggleService(!$('settingsServiceToggle').classList.contains('on'));
@@ -325,8 +407,13 @@ $('batteryBtn').onclick=()=>{if(bridge())bridge().openBatterySettings();else toa
 $('saveSettingsBtn').onclick=saveSettings;
 $('backupBtn').onclick=backupAll;
 $('restoreBtn').onclick=restoreAll;
+$('connectGmailBtn').onclick=()=>{if(bridge()&&bridge().connectGmail)bridge().connectGmail();else toast('اتصال Gmail نیاز به OAuth دارد')};
+$('connectOutlookBtn').onclick=()=>{if(bridge()&&bridge().connectOutlook)bridge().connectOutlook();else toast('اتصال Outlook نیاز به OAuth دارد')};
+$('confirmCancel').onclick=closeConfirm;
+$('confirmOk').onclick=()=>{const cb=confirmCallback;closeConfirm();if(cb)cb();};
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset.page));
 window.App={nativeToast:(t)=>toast(t),refresh:()=>{refresh();const active=document.querySelector('.screen.active')?.id||'dashboard'; if(active==='dashboard')renderDashboard(); if(active==='filters')renderRules(); if(active==='history')renderMessages(); if(active==='settings')renderSettings();}};
+restoreFormDraft();
 refresh();renderDashboard();
 </script>
 </body>
