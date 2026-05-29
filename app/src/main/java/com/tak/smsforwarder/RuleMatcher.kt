@@ -112,26 +112,26 @@ object RuleMatcher {
         return list.all { smartPhraseMatch(message, it) }
     }
 
-    private fun excludeKeywordsOk(message: String, excludeKeywords: String): Boolean {
-        val list = parseList(excludeKeywords)
+    private fun anyOk(message: String, phrases: String): Boolean {
+        val list = parseList(phrases)
+        if (list.isEmpty()) return true
+        return list.any { smartPhraseMatch(message, it) }
+    }
+
+    private fun noneBlocked(message: String, phrases: String): Boolean {
+        val list = parseList(phrases)
         if (list.isEmpty()) return true
         return list.none { smartPhraseMatch(message, it) }
     }
 
-    private fun ruleMatches(rule: JSONObject, sender: String, message: String): Boolean {
-        if (!rule.optBoolean("enabled", true)) return false
+    private fun orText(rule: JSONObject): String {
+        val v = rule.optString("orPhrases", "")
+        return if (v.isNotBlank()) v else rule.optString("smartPhrases", "")
+    }
 
-        val senderList = senderItems(rule)
-        val senderOk = if (senderList.isEmpty()) {
-            true
-        } else {
-            senderList.any { senderMatches(sender, it) }
-        }
-
-        val includeOk = legacyKeywordsOk(message, rule.optString("keywords", ""))
-        val excludeOk = excludeKeywordsOk(message, rule.optString("excludeKeywords", ""))
-
-        return senderOk && includeOk && excludeOk
+    private fun notText(rule: JSONObject): String {
+        val v = rule.optString("notPhrases", "")
+        return if (v.isNotBlank()) v else rule.optString("excludePhrases", "")
     }
 
     fun matchAll(context: Context, sender: String, body: String): List<JSONObject> {
@@ -141,7 +141,22 @@ object RuleMatcher {
 
         for (i in 0 until rules.length()) {
             val rule = rules.optJSONObject(i) ?: continue
-            if (ruleMatches(rule, sender, message)) matched.add(rule)
+            if (!rule.optBoolean("enabled", true)) continue
+
+            val senderList = senderItems(rule)
+            val senderOk = if (senderList.isEmpty()) {
+                true
+            } else {
+                senderList.any { senderMatches(sender, it) }
+            }
+
+            val allMustOk = legacyKeywordsOk(message, rule.optString("keywords", ""))
+            val oneOfOk = anyOk(message, orText(rule))
+            val notOk = noneBlocked(message, notText(rule))
+
+            if (senderOk && allMustOk && oneOfOk && notOk) {
+                matched.add(rule)
+            }
         }
 
         return matched
