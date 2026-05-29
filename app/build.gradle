@@ -11,8 +11,8 @@ android {
         applicationId 'com.takpack.smsforwarder'
         minSdk 23
         targetSdk 35
-        versionCode 22
-        versionName 'tak8'
+        versionCode 23
+        versionName 'tak9'
     }
 
     compileOptions {
