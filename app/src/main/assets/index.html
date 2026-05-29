@@ -159,13 +159,13 @@ button,input,textarea,select{font-family:inherit}
 
 <script>
 let step=1, editingId="", detailMessage=null;
-let form={name:"",type:"OTP",senders:[{number:"",note:""}],keywords:"همه",orPhrases:"",smartPhrases:"",notPhrases:"",forwardType:"history",smsTarget:"",emailTarget:"",enabled:true};
+let form={name:"",type:"OTP",senders:[{name:"",number:"",note:""}],keywords:"همه",orPhrases:"",smartPhrases:"",notPhrases:"",forwardType:"history",smsTarget:"",emailTarget:"",smsTargets:[],emailTargets:[],enabled:true};
 let rules=[], messages=[], settings={}, statusObj={};
 const $=id=>document.getElementById(id);
 const bridge=()=>window.AndroidBridge||null;
 
-const DRAFT_KEY='tak_form_draft_v8';
-const SETTINGS_DRAFT_KEY='tak_settings_draft_v8';
+const DRAFT_KEY='tak_form_draft_v12';
+const SETTINGS_DRAFT_KEY='tak_settings_draft_v12';
 function saveFormDraft(){
   try{ localStorage.setItem(DRAFT_KEY, JSON.stringify({step,editingId,form})); }catch(e){}
 }
@@ -217,8 +217,9 @@ function closeConfirm(){
   confirmCallback=null;
 }
 function inferForwardType(){
-  const hasSms=!!(form.smsTarget||'').trim();
-  const hasEmail=!!(form.emailTarget||'').trim();
+  ensureNamedTargets();
+  const hasSms=!!targetValues(form.smsTargets);
+  const hasEmail=!!targetValues(form.emailTargets);
   if(hasSms && hasEmail) return 'both';
   if(hasSms) return 'sms';
   if(hasEmail) return 'email';
@@ -230,6 +231,28 @@ function forwardLabel(t){
   if(t==='email') return 'Email';
   return 'History';
 }
+function cleanValueLine(v){
+  v=String(v||'').trim();
+  if(!v)return "";
+  if(v.includes('|')) return v.split('|').pop().trim();
+  return v.replace(/\s*[\(（].*?[\)）]\s*$/g,'').trim();
+}
+function ensureNamedTargets(){
+  if(!Array.isArray(form.senders))form.senders=[];
+  form.senders=form.senders.map(x=>typeof x==='string'?{name:'',number:x,note:''}:{name:x.name||x.note||'',number:x.number||x.value||'',note:x.note||x.name||''});
+  if(!Array.isArray(form.smsTargets)||!form.smsTargets.length){
+    form.smsTargets=splitMultiText(form.smsTarget||'').map(x=>({name:'',value:cleanValueLine(x)}));
+  }
+  if(!Array.isArray(form.emailTargets)||!form.emailTargets.length){
+    form.emailTargets=splitMultiText(form.emailTarget||'').map(x=>({name:'',value:cleanValueLine(x)}));
+  }
+}
+function targetValues(arr){return (arr||[]).map(x=>cleanValueLine((x&&x.value)||x)).filter(Boolean).join('\n')}
+function targetSummaryItems(arr,emptyText){
+  const list=(arr||[]).filter(x=>cleanValueLine(x.value));
+  if(!list.length)return emptyText||'ندارد';
+  return list.map(x=>`<span class="num-pill"><b>${esc(x.name||'بدون نام')}</b><span class="ltr">${esc(cleanValueLine(x.value))}</span></span>`).join('');
+}
 
 function splitMultiText(value){
   return String(value||'')
@@ -238,35 +261,43 @@ function splitMultiText(value){
     .filter(x=>x && x!=='همه' && x.toLowerCase()!=='all');
 }
 function sendersToText(senders){
-  return (senders||[])
-    .map(x=>String((x&&x.number)||'').trim())
-    .filter(x=>x)
-    .join('\n');
+  return (senders||[]).map(x=>String((x&&x.number)||x||'').trim()).filter(x=>x).join('\n');
 }
 function textToSenders(value){
   const list=splitMultiText(value);
-  return list.map(x=>({number:x,note:''}));
+  return list.map(x=>({name:'',number:cleanValueLine(x),note:''}));
 }
 function destinationSummary(){
+  ensureNamedTargets();
   const rows=[];
-  if((form.smsTarget||'').trim()) rows.push(`<span class="num-pill"><b>SMS</b><span class="ltr">${esc(form.smsTarget)}</span></span>`);
-  if((form.emailTarget||'').trim()) rows.push(`<span class="num-pill"><b>Email</b><span class="ltr">${esc(form.emailTarget)}</span></span>`);
+  if(targetValues(form.smsTargets)) rows.push(`<span class="num-pill"><b>SMS</b><span>${targetSummaryItems(form.smsTargets)}</span></span>`);
+  if(targetValues(form.emailTargets)) rows.push(`<span class="num-pill"><b>Email</b><span>${targetSummaryItems(form.emailTargets)}</span></span>`);
   if(!rows.length) rows.push(`<span class="num-pill"><b>History</b><span>فقط ذخیره در تاریخچه</span></span>`);
   return rows.join('');
 }
 function readStep(){
  if(step===1){form.name=$('fName')?.value.trim()||"";form.type=$('fType')?.value.trim()||"OTP"}
  if(step===2){
-  const senderText=$('fSenderNumbers')?.value||'';
-  form.senders=textToSenders(senderText);
+  const senderRows=[...document.querySelectorAll('.sender-card')];
+  if(senderRows.length){
+    form.senders=senderRows.map(row=>({
+      name:row.querySelector('.sender-name')?.value.trim()||'',
+      number:row.querySelector('.sender-number')?.value.trim()||'',
+      note:row.querySelector('.sender-name')?.value.trim()||''
+    })).filter(x=>x.number||x.name);
+  }
   form.keywords=$('fKeywords')?.value.trim()||"همه";
   form.orPhrases=$('fOrPhrases')?.value.trim()||"";
   form.smartPhrases=form.orPhrases;
   form.notPhrases=$('fNotPhrases')?.value.trim()||"";
  }
  if(step===3){
-  form.smsTarget=$('fSmsTarget')?.value.trim()||"";
-  form.emailTarget=$('fEmailTarget')?.value.trim()||"";
+  const smsRows=[...document.querySelectorAll('.sms-target-card')];
+  const emailRows=[...document.querySelectorAll('.email-target-card')];
+  form.smsTargets=smsRows.map(row=>({name:row.querySelector('.target-name')?.value.trim()||'',value:row.querySelector('.target-value')?.value.trim()||''})).filter(x=>x.value||x.name);
+  form.emailTargets=emailRows.map(row=>({name:row.querySelector('.target-name')?.value.trim()||'',value:row.querySelector('.target-value')?.value.trim()||''})).filter(x=>x.value||x.name);
+  form.smsTarget=targetValues(form.smsTargets);
+  form.emailTarget=targetValues(form.emailTargets);
   form.forwardType=inferForwardType();
   form.enabled=true;
  }
@@ -285,12 +316,12 @@ function show(page){
  if(page==='settings'){ $('title').textContent='تنظیمات'; $('subTitle').textContent='SMS و Email'; refresh(); renderSettings();}
  if(page==='messageDetail'){ $('title').textContent='جزئیات پیام'; $('subTitle').textContent='متن و وضعیت ارسال'; renderMessageDetail();}
 }
-function resetForm(){step=1;editingId="";form={name:"",type:"OTP",senders:[{number:"",note:""}],keywords:"همه",orPhrases:"",smartPhrases:"",notPhrases:"",forwardType:"history",smsTarget:"",emailTarget:"",enabled:true};saveFormDraft()}
+function resetForm(){step=1;editingId="";form={name:"",type:"OTP",senders:[{name:"",number:"",note:""}],keywords:"همه",orPhrases:"",smartPhrases:"",notPhrases:"",forwardType:"history",smsTarget:"",emailTarget:"",smsTargets:[],emailTargets:[],enabled:true};saveFormDraft()}
 function editRule(id){
  const r=rules.find(x=>x.id===id); if(!r)return;
  editingId=r.id; step=1; form=JSON.parse(JSON.stringify(r));
- if(!form.senders||!form.senders.length)form.senders=[{number:"",note:""}];
- form.smsTarget=form.smsTarget||''; form.emailTarget=form.emailTarget||''; form.orPhrases=form.orPhrases||form.smartPhrases||''; form.smartPhrases=form.orPhrases; form.notPhrases=form.notPhrases||form.excludePhrases||''; form.enabled = r.enabled !== false; form.forwardType=inferForwardType();
+ if(!form.senders||!form.senders.length)form.senders=[{name:"",number:"",note:""}];
+ form.smsTarget=form.smsTarget||''; form.emailTarget=form.emailTarget||''; form.orPhrases=form.orPhrases||form.smartPhrases||''; form.smartPhrases=form.orPhrases; form.notPhrases=form.notPhrases||form.excludePhrases||''; form.smsTargets=Array.isArray(form.smsTargets)?form.smsTargets:splitMultiText(form.smsTarget).map(x=>({name:"",value:cleanValueLine(x)})); form.emailTargets=Array.isArray(form.emailTargets)?form.emailTargets:splitMultiText(form.emailTarget).map(x=>({name:"",value:cleanValueLine(x)})); ensureNamedTargets(); form.enabled = r.enabled !== false; form.forwardType=inferForwardType();
  saveFormDraft();
  show('wizard')
 }
@@ -300,32 +331,65 @@ function renderStep(){
  $('nextBtn').textContent=step===4?'ذخیره':'بعدی';
  let h='';
  if(step===1) h=`<div class="field"><div class="label">نام فیلتر</div><input class="input" id="fName" value="${esc(form.name)}" placeholder="مثلاً بانک‌ها"></div><div class="field"><div class="label">نوع فیلتر</div><input class="input" id="fType" value="${esc(form.type)}" placeholder="OTP / بانک / تبلیغات"></div>`;
- if(step===2) h=`<div class="field"><div class="label">شماره‌ها / نام‌های فرستنده پیامک ورودی</div><textarea class="input textarea ltr" id="fSenderNumbers" placeholder="هر فرستنده در یک خط بنویسید:&#10;30001234&#10;50004000&#10;+98912xxxxxxx&#10;Bank">${esc(sendersToText(form.senders))}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">اگر این قسمت خالی باشد، فیلتر روی همه فرستنده‌ها اعمال می‌شود. برای چند فرستنده، هر شماره یا نام را در یک خط بنویس.</div></div><div class="field"><div class="label">شرط‌های عمومی - همه باید باشند</div><textarea class="input textarea" id="fKeywords" placeholder="هر خط یک شرط:&#10;واریز&#10;58004">${esc(form.keywords)}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">هر خط یعنی AND؛ همه این شرط‌ها باید داخل پیام وجود داشته باشند. اگر خالی باشد، این بخش نادیده گرفته می‌شود.</div></div><div class="field"><div class="label">یکی از این شرط‌ها باید باشد</div><textarea class="input textarea" id="fOrPhrases" placeholder="هر خط یک شرط:&#10;825-827-1644048-1&#10;815-888-1823884-1">${esc(form.orPhrases||form.smartPhrases||'')}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">هر خط یعنی OR؛ اگر این بخش پر باشد، حداقل یکی از این شرط‌ها باید داخل پیام باشد.</div></div><div class="field"><div class="label">شرط‌های عمومی - نباید باشند</div><textarea class="input textarea" id="fNotPhrases" placeholder="هر خط یک شرط ممنوع:&#10;برداشت&#10;012029817738">${esc(form.notPhrases||'')}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">اگر هرکدام از این شرط‌ها داخل پیام باشد، فیلتر اجرا نمی‌شود. فاصله، خط تیره، ي/ی، ك/ک و عدد فارسی/انگلیسی نادیده گرفته می‌شود.</div></div>`;
- if(step===3) h=`<div class="field"><div class="label">شماره‌های مقصد SMS</div><textarea class="input textarea ltr" id="fSmsTarget" placeholder="هر شماره در یک خط یا با , جدا شود">${esc(form.smsTarget)}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">برای چند شماره، هر شماره را در یک خط بنویس.</div></div><div class="field"><div class="label">ایمیل‌های مقصد</div><textarea class="input textarea ltr" id="fEmailTarget" placeholder="هر ایمیل در یک خط یا با , جدا شود">${esc(form.emailTarget)}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">برای چند ایمیل، هر ایمیل را در یک خط بنویس.</div></div>`;
+ if(step===2) h=`<div class="field"><div class="label">فرستنده‌های پیامک ورودی</div><div id="sendersBox"></div><button class="add-number" id="addSenderBtn">+ افزودن فرستنده</button><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">برای هر فرستنده یک نام و یک شماره/نام پیامکی وارد کن. اگر همه فرستنده‌ها را می‌خواهی، این لیست را خالی بگذار.</div></div><div class="field"><div class="label">شرط‌های عمومی - همه باید باشند</div><textarea class="input textarea" id="fKeywords" placeholder="هر خط یک شرط:
+واریز
+58004">${esc(form.keywords)}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">هر خط یعنی AND؛ همه این شرط‌ها باید داخل پیام وجود داشته باشند. اگر خالی باشد، این بخش نادیده گرفته می‌شود.</div></div><div class="field"><div class="label">یکی از این شرط‌ها باید باشد</div><textarea class="input textarea" id="fOrPhrases" placeholder="هر خط یک شرط:
+825-827-1644048-1
+815-888-1823884-1">${esc(form.orPhrases||form.smartPhrases||'')}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">هر خط یعنی OR؛ اگر این بخش پر باشد، حداقل یکی از این شرط‌ها باید داخل پیام باشد.</div></div><div class="field"><div class="label">شرط‌های عمومی - نباید باشند</div><textarea class="input textarea" id="fNotPhrases" placeholder="هر خط یک شرط ممنوع:
+برداشت
+012029817738">${esc(form.notPhrases||'')}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">اگر هرکدام از این شرط‌ها داخل پیام باشد، فیلتر اجرا نمی‌شود. فاصله، خط تیره، ي/ی، ك/ک و عدد فارسی/انگلیسی نادیده گرفته می‌شود.</div></div>`;
+ if(step===3) h=`<div class="field"><div class="label">مقصدهای SMS</div><div id="smsTargetsBox"></div><button class="add-number" id="addSmsTargetBtn">+ افزودن مقصد SMS</button></div><div class="field"><div class="label">مقصدهای Email</div><div id="emailTargetsBox"></div><button class="add-number" id="addEmailTargetBtn">+ افزودن مقصد Email</button></div>`;
  if(step===4){ form.forwardType=inferForwardType(); h=`<div class="card summary"><div style="font-size:22px;font-weight:900;margin-bottom:20px">خلاصه</div><div class="sumrow"><div class="k">نام</div><div class="v">${esc(form.name)}</div></div><div class="sumrow"><div class="k">شماره‌ها</div><div class="v">${numberSummary()}</div></div><div class="sumrow"><div class="k">کلمات</div><div class="v">${esc(form.keywords||'همه')}</div></div><div class="sumrow"><div class="k">یکی کافی است</div><div class="v">${esc(form.orPhrases||form.smartPhrases||'ندارد')}</div></div><div class="sumrow"><div class="k">نباید باشند</div><div class="v">${esc(form.notPhrases||'ندارد')}</div></div><div class="sumrow"><div class="k">ارسال</div><div class="v">${esc(forwardLabel(form.forwardType))}</div></div><div class="sumrow"><div class="k">مقصد</div><div class="v">${destinationSummary()}</div></div></div>`}
  $('stepBox').innerHTML=h;
+ if(step===2)renderSenderCards();
+ if(step===3)renderTargetCards();
  bindDraftInputs();
  saveFormDraft();
 }
 function numberSummary(){
- if(!form.senders.length)return '<span class="num-pill"><b>همه شماره‌ها</b><span>بدون محدودیت فرستنده</span></span>';
- return form.senders.map(x=>`<span class="num-pill"><b class="ltr">${esc(x.number||'همه شماره‌ها')}</b><span>${esc(x.note||'بدون توضیح')}</span></span>`).join('');
+ ensureNamedTargets();
+ const list=(form.senders||[]).filter(x=>x.number);
+ if(!list.length)return '<span class="num-pill"><b>همه شماره‌ها</b><span>بدون محدودیت فرستنده</span></span>';
+ return list.map(x=>`<span class="num-pill"><b>${esc(x.name||x.note||'بدون نام')}</b><span class="ltr">${esc(x.number)}</span></span>`).join('');
 }
 function renderSenderCards(){
- if(!form.senders.length)form.senders=[{number:"",note:""}];
- $('sendersBox').innerHTML=form.senders.map((x,i)=>`<div class="card sender-card"><div class="sender-grid"><div><div class="label">شماره ${fa(i+1)}</div><input class="input ltr sender-number" value="${esc(x.number)}" placeholder="0098100099 یا MALIAT"></div><div><div class="label">توضیح این شماره</div><input class="input sender-note" value="${esc(x.note)}" placeholder="مثلاً بانک ملت، مالیات، حسابداری"></div></div><button class="smallbtn" data-del="${i}">حذف این شماره</button></div>`).join('');
- document.querySelectorAll('[data-del]').forEach(btn=>btn.onclick=()=>{readStep();form.senders.splice(+btn.dataset.del,1);if(!form.senders.length)form.senders.push({number:"",note:""});renderStep()});
- $('addNumberBtn').onclick=()=>{readStep();form.senders.push({number:"",note:""});renderStep()};
- bindDraftInputs();
- saveFormDraft();
+ ensureNamedTargets();
+ if(!form.senders.length)form.senders=[{name:"",number:"",note:""}];
+ const box=$('sendersBox'); if(!box)return;
+ box.innerHTML=form.senders.map((x,i)=>`<div class="card sender-card"><div class="sender-grid"><div><div class="label">نام فرستنده ${fa(i+1)}</div><input class="input sender-name" value="${esc(x.name||x.note||'')}" placeholder="مثلاً بانک سامان"></div><div><div class="label">شماره / نام فرستنده</div><input class="input ltr sender-number" value="${esc(x.number||'')}" placeholder="+989999920000 یا BankSaman"></div></div><button class="smallbtn" data-del-sender="${i}">حذف این فرستنده</button></div>`).join('');
+ document.querySelectorAll('[data-del-sender]').forEach(btn=>btn.onclick=()=>{readStep();form.senders.splice(+btn.dataset.delSender,1);if(!form.senders.length)form.senders.push({name:"",number:"",note:""});renderStep()});
+ $('addSenderBtn').onclick=()=>{readStep();form.senders.push({name:"",number:"",note:""});renderStep()};
+ bindDraftInputs();saveFormDraft();
+}
+function renderTargetCards(){
+ ensureNamedTargets();
+ const smsBox=$('smsTargetsBox'), emailBox=$('emailTargetsBox');
+ if(smsBox){
+   if(!form.smsTargets.length)form.smsTargets=[{name:"",value:""}];
+   smsBox.innerHTML=form.smsTargets.map((x,i)=>`<div class="card sender-card sms-target-card"><div class="sender-grid"><div><div class="label">نام مقصد ${fa(i+1)}</div><input class="input target-name" value="${esc(x.name||'')}" placeholder="مثلاً محمدرضا / حسابداری"></div><div><div class="label">شماره مقصد</div><input class="input ltr target-value" value="${esc(x.value||'')}" placeholder="09121234567"></div></div><button class="smallbtn" data-del-sms="${i}">حذف این مقصد</button></div>`).join('');
+   document.querySelectorAll('[data-del-sms]').forEach(btn=>btn.onclick=()=>{readStep();form.smsTargets.splice(+btn.dataset.delSms,1);if(!form.smsTargets.length)form.smsTargets.push({name:"",value:""});renderStep()});
+   $('addSmsTargetBtn').onclick=()=>{readStep();form.smsTargets.push({name:"",value:""});renderStep()};
+ }
+ if(emailBox){
+   if(!form.emailTargets.length)form.emailTargets=[{name:"",value:""}];
+   emailBox.innerHTML=form.emailTargets.map((x,i)=>`<div class="card sender-card email-target-card"><div class="sender-grid"><div><div class="label">نام ایمیل ${fa(i+1)}</div><input class="input target-name" value="${esc(x.name||'')}" placeholder="مثلاً مالی / مدیرعامل"></div><div><div class="label">آدرس ایمیل</div><input class="input ltr target-value" value="${esc(x.value||'')}" placeholder="finance@example.com"></div></div><button class="smallbtn" data-del-email="${i}">حذف این ایمیل</button></div>`).join('');
+   document.querySelectorAll('[data-del-email]').forEach(btn=>btn.onclick=()=>{readStep();form.emailTargets.splice(+btn.dataset.delEmail,1);if(!form.emailTargets.length)form.emailTargets.push({name:"",value:""});renderStep()});
+   $('addEmailTargetBtn').onclick=()=>{readStep();form.emailTargets.push({name:"",value:""});renderStep()};
+ }
+ bindDraftInputs();saveFormDraft();
 }
 function saveRule(){
  readStep();
  if(!form.name){toast('نام فیلتر را وارد کن');step=1;renderStep();return}
- form.senders=form.senders.filter(x=>x.number||x.note);
+ ensureNamedTargets();
+ form.senders=form.senders.filter(x=>x.number||x.name||x.note).map(x=>({name:x.name||x.note||'',number:x.number||'',note:x.name||x.note||''}));
+ form.smsTargets=form.smsTargets.filter(x=>x.value||x.name);
+ form.emailTargets=form.emailTargets.filter(x=>x.value||x.name);
+ form.smsTarget=targetValues(form.smsTargets);
+ form.emailTarget=targetValues(form.emailTargets);
  form.forwardType=inferForwardType();
  if(form.enabled !== false) form.enabled=true;
- const rule={id:editingId,name:form.name,type:form.type,senders:form.senders,keywords:form.keywords,orPhrases:form.orPhrases||form.smartPhrases||'',smartPhrases:form.orPhrases||form.smartPhrases||'',notPhrases:form.notPhrases||'',forwardType:form.forwardType,smsTarget:form.smsTarget,emailTarget:form.emailTarget,enabled:form.enabled!==false};
+ const rule={id:editingId,name:form.name,type:form.type,senders:form.senders,keywords:form.keywords,orPhrases:form.orPhrases||form.smartPhrases||'',smartPhrases:form.orPhrases||form.smartPhrases||'',notPhrases:form.notPhrases||'',forwardType:form.forwardType,smsTarget:form.smsTarget,emailTarget:form.emailTarget,smsTargets:form.smsTargets,emailTargets:form.emailTargets,enabled:form.enabled!==false};
  let ok=false;
  if(bridge()) ok=bridge().saveRule(JSON.stringify(rule)); else{let arr=JSON.parse(localStorage.getItem('rules')||'[]');if(!rule.id)rule.id=String(Date.now());let idx=arr.findIndex(x=>x.id===rule.id);if(idx>=0)arr[idx]=rule;else arr.push(rule);localStorage.setItem('rules',JSON.stringify(arr));ok=true}
  if(ok){toast('فیلتر ذخیره شد');clearFormDraft();resetForm();refresh();show('filters')}else toast('ذخیره نشد');
@@ -333,7 +397,7 @@ function saveRule(){
 function refresh(){
  if(bridge()){try{rules=JSON.parse(bridge().getRules()||'[]');messages=JSON.parse(bridge().getMessages()||'[]');settings=JSON.parse(bridge().getSettings()||'{}');statusObj=JSON.parse(bridge().getStatus()||'{}')}catch(e){statusObj={}}}
  else{rules=JSON.parse(localStorage.getItem('rules')||'[]');messages=JSON.parse(localStorage.getItem('messages')||'[]');settings=JSON.parse(localStorage.getItem('settings')||'{}');statusObj={receiveSms:false,sendSms:false,enabled:true,battery:false}}
- rules=rules.map(r=>{r.smsTarget=r.smsTarget||'';r.emailTarget=r.emailTarget||'';if(!Array.isArray(r.senders)){const raw=r.senderNumbers||r.sender||r.senderNumber||'';r.senders=textToSenders(raw);}r.orPhrases=r.orPhrases||r.smartPhrases||'';r.smartPhrases=r.orPhrases;r.notPhrases=r.notPhrases||r.excludePhrases||'';r.forwardType=(r.smsTarget&&r.emailTarget)?'both':(r.smsTarget?'sms':(r.emailTarget?'email':'history'));if(typeof r.enabled==='undefined')r.enabled=true;return r});
+ rules=rules.map(r=>{r.smsTarget=r.smsTarget||'';r.emailTarget=r.emailTarget||'';if(!Array.isArray(r.senders)){const raw=r.senderNumbers||r.sender||r.senderNumber||'';r.senders=textToSenders(raw);}r.senders=(r.senders||[]).map(x=>typeof x==='string'?{name:'',number:x,note:''}:{name:x.name||x.note||'',number:x.number||x.value||'',note:x.note||x.name||''});r.smsTargets=Array.isArray(r.smsTargets)?r.smsTargets:splitMultiText(r.smsTarget).map(x=>({name:'',value:cleanValueLine(x)}));r.emailTargets=Array.isArray(r.emailTargets)?r.emailTargets:splitMultiText(r.emailTarget).map(x=>({name:'',value:cleanValueLine(x)}));r.smsTarget=targetValues(r.smsTargets);r.emailTarget=targetValues(r.emailTargets);r.orPhrases=r.orPhrases||r.smartPhrases||'';r.smartPhrases=r.orPhrases;r.notPhrases=r.notPhrases||r.excludePhrases||'';r.forwardType=(r.smsTarget&&r.emailTarget)?'both':(r.smsTarget?'sms':(r.emailTarget?'email':'history'));if(typeof r.enabled==='undefined')r.enabled=true;return r});
 }
 function renderDashboard(){
  $('dashRulesNum').textContent=fa(rules.filter(r=>r.enabled!==false).length); $('dashSmsNum').textContent=fa(messages.length);
@@ -359,13 +423,13 @@ function renderSettings(){
 }
 function ruleDest(r){
  const rows=[];
- if(r.smsTarget) rows.push(`SMS: <span class="ltr">${esc(r.smsTarget)}</span>`);
- if(r.emailTarget) rows.push(`Email: <span class="ltr">${esc(r.emailTarget)}</span>`);
+ if(r.smsTarget) rows.push(`SMS: <span class="ltr">${esc(r.smsTarget).replace(/\n/g,' / ')}</span>`);
+ if(r.emailTarget) rows.push(`Email: <span class="ltr">${esc(r.emailTarget).replace(/\n/g,' / ')}</span>`);
  return rows.join(' · ') || 'History';
 }
 function renderRules(){
  if(!rules.length){$('rulesList').innerHTML=`<div class="card empty"><div class="empty-title">هنوز فیلتری ثبت نشده</div><button class="btn primary" id="emptyAddBtn">افزودن اولین فیلتر</button></div>`;$('emptyAddBtn').onclick=()=>{resetForm();show('wizard')};return}
- $('rulesList').innerHTML=rules.map((r,i)=>{const nums=(r.senders||[]).map(x=>`<span class="ltr">${esc(x.number||'همه')}</span> - ${esc(x.note||'بدون توضیح')}`).join('<br>');const f=(r.smsTarget&&r.emailTarget)?'both':(r.smsTarget?'sms':(r.emailTarget?'email':'history'));const on=r.enabled!==false;return `<div class="card row rule-card ${on?'':'off'}"><div class="rule-num">${fa(i+1)}</div><div class="body"><div class="rt">${esc(r.name)}</div><div class="rs">${nums||'همه شماره‌ها'} · ${forwardLabel(f)}</div><div class="rs">${ruleDest(r)}</div>${r.orPhrases?`<div class="rs">یکی کافی است: ${esc(r.orPhrases).replace(/\n/g,' / ')}</div>`:''}${r.notPhrases?`<div class="rs">نباید باشد: ${esc(r.notPhrases).replace(/\n/g,' / ')}</div>`:''}<div class="rule-actions"><button class="rule-action edit" data-id="${r.id}">ویرایش</button><button class="rule-action danger askdel" data-id="${r.id}">حذف</button><div class="toggle ${on?'on':''}" data-toggle-rule="${r.id}"></div></div><div class="confirm-delete" id="confirm-${r.id}"><button class="rule-action cancel-del" data-id="${r.id}">انصراف</button><button class="rule-action danger del" data-id="${r.id}">حذف قطعی</button></div><div style="margin-top:8px"><span class="tag ${on?'':'gray'}">${on?'فعال':'غیرفعال'}</span></div></div></div>`}).join('');
+ $('rulesList').innerHTML=rules.map((r,i)=>{const nums=(r.senders||[]).map(x=>`${esc(x.name||x.note||'بدون نام')} - <span class="ltr">${esc(x.number||'همه')}</span>`).join('<br>');const f=(r.smsTarget&&r.emailTarget)?'both':(r.smsTarget?'sms':(r.emailTarget?'email':'history'));const on=r.enabled!==false;return `<div class="card row rule-card ${on?'':'off'}"><div class="rule-num">${fa(i+1)}</div><div class="body"><div class="rt">${esc(r.name)}</div><div class="rs">${nums||'همه شماره‌ها'} · ${forwardLabel(f)}</div><div class="rs">${ruleDest(r)}</div>${r.orPhrases?`<div class="rs">یکی کافی است: ${esc(r.orPhrases).replace(/\n/g,' / ')}</div>`:''}${r.notPhrases?`<div class="rs">نباید باشد: ${esc(r.notPhrases).replace(/\n/g,' / ')}</div>`:''}<div class="rule-actions"><button class="rule-action edit" data-id="${r.id}">ویرایش</button><button class="rule-action danger askdel" data-id="${r.id}">حذف</button><div class="toggle ${on?'on':''}" data-toggle-rule="${r.id}"></div></div><div class="confirm-delete" id="confirm-${r.id}"><button class="rule-action cancel-del" data-id="${r.id}">انصراف</button><button class="rule-action danger del" data-id="${r.id}">حذف قطعی</button></div><div style="margin-top:8px"><span class="tag ${on?'':'gray'}">${on?'فعال':'غیرفعال'}</span></div></div></div>`}).join('');
  document.querySelectorAll('.edit').forEach(b=>b.onclick=()=>editRule(b.dataset.id));
  document.querySelectorAll('[data-toggle-rule]').forEach(t=>t.onclick=()=>{const id=t.dataset.toggleRule;const r=rules.find(x=>x.id===id);const next=!(r&&r.enabled!==false);if(bridge())bridge().toggleRule(id,next);else{rules=rules.map(x=>x.id===id?{...x,enabled:next}:x);localStorage.setItem('rules',JSON.stringify(rules))}refresh();renderRules();toast(next?'فیلتر فعال شد':'فیلتر غیرفعال شد')});
  document.querySelectorAll('.askdel').forEach(b=>b.onclick=()=>askConfirm('حذف فیلتر','آیا از حذف این فیلتر مطمئن هستید؟',()=>{if(bridge())bridge().deleteRule(b.dataset.id);else localStorage.setItem('rules',JSON.stringify(rules.filter(x=>x.id!==b.dataset.id)));refresh();renderRules();toast('حذف شد')}));
