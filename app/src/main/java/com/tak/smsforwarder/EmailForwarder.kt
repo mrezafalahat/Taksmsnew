@@ -1,22 +1,26 @@
 package com.takpack.smsforwarder
 
 import android.content.Context
+import android.util.Base64
 import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.net.Socket
-import java.util.Base64
 import javax.net.ssl.SSLSocketFactory
 
 object EmailForwarder {
+
     fun send(context: Context, toAddress: String, subject: String, body: String): Pair<Boolean, String> {
+        var socket: Socket? = null
+
         return try {
             val settings = DataStore.getSettingsObject(context)
-            val host = settings.optString("smtpHost", "").trim()
+
+            val host = settings.optString("smtpHost", "").trim().lowercase()
             val port = settings.optString("smtpPort", "465").trim().toIntOrNull() ?: 465
             val username = settings.optString("smtpUsername", "").trim()
-            val password = settings.optString("smtpPassword", "").trim()
+            val password = settings.optString("smtpPassword", "").replace(" ", "").trim()
             val from = settings.optString("smtpFrom", username).trim().ifBlank { username }
 
             if (host.isBlank()) return false to "SMTP Host تنظیم نشده"
@@ -24,39 +28,75 @@ object EmailForwarder {
             if (password.isBlank()) return false to "SMTP Password تنظیم نشده"
             if (toAddress.isBlank()) return false to "ایمیل مقصد خالی است"
 
-            val socket: Socket = if (port == 465) {
+            socket = if (port == 465) {
                 SSLSocketFactory.getDefault().createSocket(host, port) as Socket
             } else {
                 Socket(host, port)
             }
 
-            socket.soTimeout = 20000
+            socket.soTimeout = 30000
+
             val reader = BufferedReader(InputStreamReader(socket.getInputStream(), Charsets.UTF_8))
             val writer = BufferedWriter(OutputStreamWriter(socket.getOutputStream(), Charsets.UTF_8))
 
-            fun readLine(): String = reader.readLine() ?: ""
-            fun cmd(line: String): String {
-                writer.write(line + "\r\n")
+            fun readResponse(): String {
+                val lines = mutableListOf<String>()
+                while (true) {
+                    val line = reader.readLine() ?: break
+                    lines.add(line)
+
+                    if (line.length >= 4 && line[3] == ' ') break
+                    if (line.length < 4) break
+                }
+                return lines.joinToString("\n")
+            }
+
+            fun cmd(command: String): String {
+                writer.write(command + "\r\n")
                 writer.flush()
-                return readLine()
+                return readResponse()
             }
 
-            readLine()
-            cmd("EHLO android")
-            cmd("AUTH LOGIN")
-            cmd(Base64.getEncoder().encodeToString(username.toByteArray(Charsets.UTF_8)))
-            val authResult = cmd(Base64.getEncoder().encodeToString(password.toByteArray(Charsets.UTF_8)))
-            if (!authResult.startsWith("235")) {
-                socket.close()
-                return false to "SMTP Authentication failed"
+            fun b64(text: String): String {
+                return Base64.encodeToString(text.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
             }
 
-            cmd("MAIL FROM:<$from>")
-            val targets = toAddress.split(",", "،", ";", "\n").map { it.trim() }.filter { it.isNotBlank() }
-            for (t in targets) cmd("RCPT TO:<$t>")
-            cmd("DATA")
+            val hello = readResponse()
+            if (!hello.startsWith("220")) return false to "SMTP اتصال برقرار نشد: $hello"
 
-            val safeSubject = "=?UTF-8?B?" + Base64.getEncoder().encodeToString(subject.toByteArray(Charsets.UTF_8)) + "?="
+            val ehlo = cmd("EHLO android")
+            if (!ehlo.startsWith("250")) return false to "EHLO خطا: $ehlo"
+
+            val auth = cmd("AUTH LOGIN")
+            if (!auth.startsWith("334")) return false to "AUTH شروع نشد: $auth"
+
+            val userResp = cmd(b64(username))
+            if (!userResp.startsWith("334")) return false to "Username پذیرفته نشد: $userResp"
+
+            val passResp = cmd(b64(password))
+            if (!passResp.startsWith("235")) return false to "رمز یا App Password اشتباه است: $passResp"
+
+            val mailFrom = cmd("MAIL FROM:<$from>")
+            if (!mailFrom.startsWith("250")) return false to "MAIL FROM خطا: $mailFrom"
+
+            val targets = toAddress
+                .split(",", "،", ";", "\n")
+                .map { it.trim() }
+                .filter { it.isNotBlank() }
+
+            for (t in targets) {
+                val rcpt = cmd("RCPT TO:<$t>")
+                if (!rcpt.startsWith("250") && !rcpt.startsWith("251")) {
+                    return false to "ایمیل مقصد پذیرفته نشد: $rcpt"
+                }
+            }
+
+            val data = cmd("DATA")
+            if (!data.startsWith("354")) return false to "DATA خطا: $data"
+
+            val safeSubject = "=?UTF-8?B?${b64(subject)}?="
+            val encodedBody = Base64.encodeToString(body.toByteArray(Charsets.UTF_8), Base64.DEFAULT)
+
             val msg = buildString {
                 append("From: <$from>\r\n")
                 append("To: ${targets.joinToString(",")}\r\n")
@@ -65,19 +105,29 @@ object EmailForwarder {
                 append("Content-Type: text/plain; charset=UTF-8\r\n")
                 append("Content-Transfer-Encoding: base64\r\n")
                 append("\r\n")
-                append(Base64.getMimeEncoder().encodeToString(body.toByteArray(Charsets.UTF_8)))
+                append(encodedBody)
                 append("\r\n.\r\n")
             }
 
             writer.write(msg)
             writer.flush()
-            val dataResult = readLine()
-            cmd("QUIT")
-            socket.close()
 
-            if (dataResult.startsWith("250")) true to "Email ارسال شد" else false to dataResult
+            val finalResp = readResponse()
+            cmd("QUIT")
+
+            if (finalResp.startsWith("250")) {
+                true to "Email ارسال شد"
+            } else {
+                false to "ارسال نشد: $finalResp"
+            }
+
         } catch (e: Exception) {
-            false to (e.message ?: "خطای ارسال Email")
+            false to "خطای ارسال Email: ${e.message ?: e.javaClass.simpleName}"
+        } finally {
+            try {
+                socket?.close()
+            } catch (_: Exception) {
+            }
         }
     }
 }
