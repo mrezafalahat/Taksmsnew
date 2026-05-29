@@ -112,34 +112,43 @@ object RuleMatcher {
         return list.all { smartPhraseMatch(message, it) }
     }
 
-    private fun smartAnyOk(message: String, smartPhrases: String): Boolean {
-        val list = parseList(smartPhrases)
+    private fun excludeKeywordsOk(message: String, excludeKeywords: String): Boolean {
+        val list = parseList(excludeKeywords)
         if (list.isEmpty()) return true
-        return list.any { smartPhraseMatch(message, it) }
+        return list.none { smartPhraseMatch(message, it) }
     }
 
-    fun match(context: Context, sender: String, body: String): JSONObject? {
+    private fun ruleMatches(rule: JSONObject, sender: String, message: String): Boolean {
+        if (!rule.optBoolean("enabled", true)) return false
+
+        val senderList = senderItems(rule)
+        val senderOk = if (senderList.isEmpty()) {
+            true
+        } else {
+            senderList.any { senderMatches(sender, it) }
+        }
+
+        val includeOk = legacyKeywordsOk(message, rule.optString("keywords", ""))
+        val excludeOk = excludeKeywordsOk(message, rule.optString("excludeKeywords", ""))
+
+        return senderOk && includeOk && excludeOk
+    }
+
+    fun matchAll(context: Context, sender: String, body: String): List<JSONObject> {
         val message = "$sender $body"
         val rules = DataStore.getRulesArray(context)
+        val matched = mutableListOf<JSONObject>()
 
         for (i in 0 until rules.length()) {
             val rule = rules.optJSONObject(i) ?: continue
-            if (!rule.optBoolean("enabled", true)) continue
-
-            val senderList = senderItems(rule)
-            val senderOk = if (senderList.isEmpty()) {
-                true
-            } else {
-                senderList.any { senderMatches(sender, it) }
-            }
-
-            val keywordsOk = legacyKeywordsOk(message, rule.optString("keywords", ""))
-            val smartOk = smartAnyOk(message, rule.optString("smartPhrases", ""))
-
-            if (senderOk && keywordsOk && smartOk) return rule
+            if (ruleMatches(rule, sender, message)) matched.add(rule)
         }
 
-        return null
+        return matched
+    }
+
+    fun match(context: Context, sender: String, body: String): JSONObject? {
+        return matchAll(context, sender, body).firstOrNull()
     }
 
     fun senderNote(rule: JSONObject?, sender: String): String {
