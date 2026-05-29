@@ -159,7 +159,7 @@ button,input,textarea,select{font-family:inherit}
 
 <script>
 let step=1, editingId="", detailMessage=null;
-let form={name:"",type:"OTP",senders:[{number:"",note:""}],keywords:"همه",smartPhrases:"",forwardType:"history",smsTarget:"",emailTarget:"",enabled:true};
+let form={name:"",type:"OTP",senders:[{number:"",note:""}],keywords:"همه",excludeKeywords:"",forwardType:"history",smsTarget:"",emailTarget:"",enabled:true};
 let rules=[], messages=[], settings={}, statusObj={};
 const $=id=>document.getElementById(id);
 const bridge=()=>window.AndroidBridge||null;
@@ -260,7 +260,7 @@ function readStep(){
   const senderText=$('fSenderNumbers')?.value||'';
   form.senders=textToSenders(senderText);
   form.keywords=$('fKeywords')?.value.trim()||"همه";
-  form.smartPhrases=$('fSmartPhrases')?.value.trim()||"";
+  form.excludeKeywords=$('fExcludeKeywords')?.value.trim()||"";
  }
  if(step===3){
   form.smsTarget=$('fSmsTarget')?.value.trim()||"";
@@ -283,12 +283,12 @@ function show(page){
  if(page==='settings'){ $('title').textContent='تنظیمات'; $('subTitle').textContent='SMS و Email'; refresh(); renderSettings();}
  if(page==='messageDetail'){ $('title').textContent='جزئیات پیام'; $('subTitle').textContent='متن و وضعیت ارسال'; renderMessageDetail();}
 }
-function resetForm(){step=1;editingId="";form={name:"",type:"OTP",senders:[{number:"",note:""}],keywords:"همه",smartPhrases:"",forwardType:"history",smsTarget:"",emailTarget:"",enabled:true};saveFormDraft()}
+function resetForm(){step=1;editingId="";form={name:"",type:"OTP",senders:[{number:"",note:""}],keywords:"همه",excludeKeywords:"",forwardType:"history",smsTarget:"",emailTarget:"",enabled:true};saveFormDraft()}
 function editRule(id){
  const r=rules.find(x=>x.id===id); if(!r)return;
  editingId=r.id; step=1; form=JSON.parse(JSON.stringify(r));
  if(!form.senders||!form.senders.length)form.senders=[{number:"",note:""}];
- form.smsTarget=form.smsTarget||''; form.emailTarget=form.emailTarget||''; form.smartPhrases=form.smartPhrases||''; form.enabled = r.enabled !== false; form.forwardType=inferForwardType();
+ form.smsTarget=form.smsTarget||''; form.emailTarget=form.emailTarget||''; form.excludeKeywords=form.excludeKeywords||''; if(!form.excludeKeywords && form.smartPhrases) form.excludeKeywords=''; form.enabled = r.enabled !== false; form.forwardType=inferForwardType();
  saveFormDraft();
  show('wizard')
 }
@@ -298,9 +298,9 @@ function renderStep(){
  $('nextBtn').textContent=step===4?'ذخیره':'بعدی';
  let h='';
  if(step===1) h=`<div class="field"><div class="label">نام فیلتر</div><input class="input" id="fName" value="${esc(form.name)}" placeholder="مثلاً بانک‌ها"></div><div class="field"><div class="label">نوع فیلتر</div><input class="input" id="fType" value="${esc(form.type)}" placeholder="OTP / بانک / تبلیغات"></div>`;
- if(step===2) h=`<div class="field"><div class="label">شماره‌ها / نام‌های فرستنده پیامک ورودی</div><textarea class="input textarea ltr" id="fSenderNumbers" placeholder="هر فرستنده در یک خط بنویسید:&#10;30001234&#10;50004000&#10;+98912xxxxxxx&#10;Bank">${esc(sendersToText(form.senders))}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">اگر این قسمت خالی باشد، فیلتر روی همه فرستنده‌ها اعمال می‌شود. برای چند فرستنده، هر شماره یا نام را در یک خط بنویس.</div></div><div class="field"><div class="label">شرط‌های عمومی - همه باید باشند</div><textarea class="input textarea" id="fKeywords" placeholder="مثلاً: بانک صنعت و معدن">${esc(form.keywords)}</textarea></div><div class="field"><div class="label">عبارت‌های هوشمند - یکی کافی است</div><textarea class="input textarea" id="fSmartPhrases" placeholder="مثلاً هر خط یک عبارت:&#10;برداشت از 58004&#10;واریز به 58004">${esc(form.smartPhrases||'')}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">فاصله، دو نقطه، خط تیره، ي/ی، ك/ک و عدد فارسی/انگلیسی نادیده گرفته می‌شود. کلمات باید به همین ترتیب در پیام باشند.</div></div>`;
+ if(step===2) h=`<div class="field"><div class="label">شماره‌ها / نام‌های فرستنده پیامک ورودی</div><textarea class="input textarea ltr" id="fSenderNumbers" placeholder="هر فرستنده در یک خط بنویسید:&#10;30001234&#10;50004000&#10;+98912xxxxxxx&#10;Bank">${esc(sendersToText(form.senders))}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">اگر این قسمت خالی باشد، فیلتر روی همه فرستنده‌ها اعمال می‌شود. برای چند فرستنده، هر شماره یا نام را در یک خط بنویس.</div></div><div class="field"><div class="label">شرط‌های عمومی - همه باید باشند</div><textarea class="input textarea ltr" id="fKeywords" placeholder="هر شرط در یک خط:&#10;واریز&#10;58004">${esc(form.keywords)}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">هر خط یعنی «و». همه این خط‌ها باید داخل پیام باشند.</div></div><div class="field"><div class="label">شرط‌های عمومی - نباید باشند</div><textarea class="input textarea ltr" id="fExcludeKeywords" placeholder="هر شرط ممنوع در یک خط:&#10;012029817738&#10;برداشت">${esc(form.excludeKeywords||'')}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">اگر هرکدام از این خط‌ها داخل پیام باشد، این فیلتر اجرا نمی‌شود. فاصله، خط تیره، ي/ی، ك/ک و عدد فارسی/انگلیسی نرمال می‌شود.</div></div>`;
  if(step===3) h=`<div class="field"><div class="label">شماره‌های مقصد SMS</div><textarea class="input textarea ltr" id="fSmsTarget" placeholder="هر شماره در یک خط یا با , جدا شود">${esc(form.smsTarget)}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">برای چند شماره، هر شماره را در یک خط بنویس.</div></div><div class="field"><div class="label">ایمیل‌های مقصد</div><textarea class="input textarea ltr" id="fEmailTarget" placeholder="هر ایمیل در یک خط یا با , جدا شود">${esc(form.emailTarget)}</textarea><div style="font-size:11px;color:#8b94a7;line-height:1.9;margin-top:8px">برای چند ایمیل، هر ایمیل را در یک خط بنویس.</div></div>`;
- if(step===4){ form.forwardType=inferForwardType(); h=`<div class="card summary"><div style="font-size:22px;font-weight:900;margin-bottom:20px">خلاصه</div><div class="sumrow"><div class="k">نام</div><div class="v">${esc(form.name)}</div></div><div class="sumrow"><div class="k">شماره‌ها</div><div class="v">${numberSummary()}</div></div><div class="sumrow"><div class="k">کلمات</div><div class="v">${esc(form.keywords||'همه')}</div></div><div class="sumrow"><div class="k">عبارت هوشمند</div><div class="v">${esc(form.smartPhrases||'ندارد')}</div></div><div class="sumrow"><div class="k">ارسال</div><div class="v">${esc(forwardLabel(form.forwardType))}</div></div><div class="sumrow"><div class="k">مقصد</div><div class="v">${destinationSummary()}</div></div></div>`}
+ if(step===4){ form.forwardType=inferForwardType(); h=`<div class="card summary"><div style="font-size:22px;font-weight:900;margin-bottom:20px">خلاصه</div><div class="sumrow"><div class="k">نام</div><div class="v">${esc(form.name)}</div></div><div class="sumrow"><div class="k">شماره‌ها</div><div class="v">${numberSummary()}</div></div><div class="sumrow"><div class="k">باید باشند</div><div class="v">${esc(form.keywords||'همه')}</div></div><div class="sumrow"><div class="k">نباید باشند</div><div class="v">${esc(form.excludeKeywords||'ندارد')}</div></div><div class="sumrow"><div class="k">ارسال</div><div class="v">${esc(forwardLabel(form.forwardType))}</div></div><div class="sumrow"><div class="k">مقصد</div><div class="v">${destinationSummary()}</div></div></div>`}
  $('stepBox').innerHTML=h;
  bindDraftInputs();
  saveFormDraft();
@@ -323,7 +323,7 @@ function saveRule(){
  form.senders=form.senders.filter(x=>x.number||x.note);
  form.forwardType=inferForwardType();
  if(form.enabled !== false) form.enabled=true;
- const rule={id:editingId,name:form.name,type:form.type,senders:form.senders,keywords:form.keywords,smartPhrases:form.smartPhrases||'',forwardType:form.forwardType,smsTarget:form.smsTarget,emailTarget:form.emailTarget,enabled:form.enabled!==false};
+ const rule={id:editingId,name:form.name,type:form.type,senders:form.senders,keywords:form.keywords,excludeKeywords:form.excludeKeywords||'',smartPhrases:'',forwardType:form.forwardType,smsTarget:form.smsTarget,emailTarget:form.emailTarget,enabled:form.enabled!==false};
  let ok=false;
  if(bridge()) ok=bridge().saveRule(JSON.stringify(rule)); else{let arr=JSON.parse(localStorage.getItem('rules')||'[]');if(!rule.id)rule.id=String(Date.now());let idx=arr.findIndex(x=>x.id===rule.id);if(idx>=0)arr[idx]=rule;else arr.push(rule);localStorage.setItem('rules',JSON.stringify(arr));ok=true}
  if(ok){toast('فیلتر ذخیره شد');clearFormDraft();resetForm();refresh();show('filters')}else toast('ذخیره نشد');
@@ -331,7 +331,7 @@ function saveRule(){
 function refresh(){
  if(bridge()){try{rules=JSON.parse(bridge().getRules()||'[]');messages=JSON.parse(bridge().getMessages()||'[]');settings=JSON.parse(bridge().getSettings()||'{}');statusObj=JSON.parse(bridge().getStatus()||'{}')}catch(e){statusObj={}}}
  else{rules=JSON.parse(localStorage.getItem('rules')||'[]');messages=JSON.parse(localStorage.getItem('messages')||'[]');settings=JSON.parse(localStorage.getItem('settings')||'{}');statusObj={receiveSms:false,sendSms:false,enabled:true,battery:false}}
- rules=rules.map(r=>{r.smsTarget=r.smsTarget||'';r.emailTarget=r.emailTarget||'';if(!Array.isArray(r.senders)){const raw=r.senderNumbers||r.sender||r.senderNumber||'';r.senders=textToSenders(raw);}r.forwardType=(r.smsTarget&&r.emailTarget)?'both':(r.smsTarget?'sms':(r.emailTarget?'email':'history'));if(typeof r.enabled==='undefined')r.enabled=true;return r});
+ rules=rules.map(r=>{r.smsTarget=r.smsTarget||'';r.emailTarget=r.emailTarget||'';if(!Array.isArray(r.senders)){const raw=r.senderNumbers||r.sender||r.senderNumber||'';r.senders=textToSenders(raw);}r.forwardType=(r.smsTarget&&r.emailTarget)?'both':(r.smsTarget?'sms':(r.emailTarget?'email':'history'));if(typeof r.enabled==='undefined')r.enabled=true;if(typeof r.excludeKeywords==='undefined')r.excludeKeywords='';return r});
 }
 function renderDashboard(){
  $('dashRulesNum').textContent=fa(rules.filter(r=>r.enabled!==false).length); $('dashSmsNum').textContent=fa(messages.length);
@@ -363,7 +363,7 @@ function ruleDest(r){
 }
 function renderRules(){
  if(!rules.length){$('rulesList').innerHTML=`<div class="card empty"><div class="empty-title">هنوز فیلتری ثبت نشده</div><button class="btn primary" id="emptyAddBtn">افزودن اولین فیلتر</button></div>`;$('emptyAddBtn').onclick=()=>{resetForm();show('wizard')};return}
- $('rulesList').innerHTML=rules.map((r,i)=>{const nums=(r.senders||[]).map(x=>`<span class="ltr">${esc(x.number||'همه')}</span> - ${esc(x.note||'بدون توضیح')}`).join('<br>');const f=(r.smsTarget&&r.emailTarget)?'both':(r.smsTarget?'sms':(r.emailTarget?'email':'history'));const on=r.enabled!==false;return `<div class="card row rule-card ${on?'':'off'}"><div class="rule-num">${fa(i+1)}</div><div class="body"><div class="rt">${esc(r.name)}</div><div class="rs">${nums||'همه شماره‌ها'} · ${forwardLabel(f)}</div><div class="rs">${ruleDest(r)}</div>${r.smartPhrases?`<div class="rs">عبارت: ${esc(r.smartPhrases).replace(/\n/g,' / ')}</div>`:''}<div class="rule-actions"><button class="rule-action edit" data-id="${r.id}">ویرایش</button><button class="rule-action danger askdel" data-id="${r.id}">حذف</button><div class="toggle ${on?'on':''}" data-toggle-rule="${r.id}"></div></div><div class="confirm-delete" id="confirm-${r.id}"><button class="rule-action cancel-del" data-id="${r.id}">انصراف</button><button class="rule-action danger del" data-id="${r.id}">حذف قطعی</button></div><div style="margin-top:8px"><span class="tag ${on?'':'gray'}">${on?'فعال':'غیرفعال'}</span></div></div></div>`}).join('');
+ $('rulesList').innerHTML=rules.map((r,i)=>{const nums=(r.senders||[]).map(x=>`<span class="ltr">${esc(x.number||'همه')}</span> - ${esc(x.note||'بدون توضیح')}`).join('<br>');const f=(r.smsTarget&&r.emailTarget)?'both':(r.smsTarget?'sms':(r.emailTarget?'email':'history'));const on=r.enabled!==false;return `<div class="card row rule-card ${on?'':'off'}"><div class="rule-num">${fa(i+1)}</div><div class="body"><div class="rt">${esc(r.name)}</div><div class="rs">${nums||'همه شماره‌ها'} · ${forwardLabel(f)}</div><div class="rs">${ruleDest(r)}</div>${r.keywords&&r.keywords!=='همه'?`<div class="rs">باید: ${esc(r.keywords).replace(/\n/g,' / ')}</div>`:''}${r.excludeKeywords?`<div class="rs">نباید: ${esc(r.excludeKeywords).replace(/\n/g,' / ')}</div>`:''}<div class="rule-actions"><button class="rule-action edit" data-id="${r.id}">ویرایش</button><button class="rule-action danger askdel" data-id="${r.id}">حذف</button><div class="toggle ${on?'on':''}" data-toggle-rule="${r.id}"></div></div><div class="confirm-delete" id="confirm-${r.id}"><button class="rule-action cancel-del" data-id="${r.id}">انصراف</button><button class="rule-action danger del" data-id="${r.id}">حذف قطعی</button></div><div style="margin-top:8px"><span class="tag ${on?'':'gray'}">${on?'فعال':'غیرفعال'}</span></div></div></div>`}).join('');
  document.querySelectorAll('.edit').forEach(b=>b.onclick=()=>editRule(b.dataset.id));
  document.querySelectorAll('[data-toggle-rule]').forEach(t=>t.onclick=()=>{const id=t.dataset.toggleRule;const r=rules.find(x=>x.id===id);const next=!(r&&r.enabled!==false);if(bridge())bridge().toggleRule(id,next);else{rules=rules.map(x=>x.id===id?{...x,enabled:next}:x);localStorage.setItem('rules',JSON.stringify(rules))}refresh();renderRules();toast(next?'فیلتر فعال شد':'فیلتر غیرفعال شد')});
  document.querySelectorAll('.askdel').forEach(b=>b.onclick=()=>askConfirm('حذف فیلتر','آیا از حذف این فیلتر مطمئن هستید؟',()=>{if(bridge())bridge().deleteRule(b.dataset.id);else localStorage.setItem('rules',JSON.stringify(rules.filter(x=>x.id!==b.dataset.id)));refresh();renderRules();toast('حذف شد')}));
