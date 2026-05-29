@@ -1,251 +1,693 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
-<title>TAK SMS Forwarder</title>
-<style>
-:root{
-  --bg:#f8f9fc;--card:#fff;--text:#202637;--muted:#8b94a7;--line:#e9edf5;
-  --blue:#0788c9;--blue2:#2563eb;--violet:#6d5dfc;--green:#18a66a;--red:#ef4444;--orange:#f59e0b;
-  --shadow:0 14px 32px rgba(15,23,42,.07);--shadow2:0 22px 50px rgba(15,23,42,.12)
-}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;width:100%;height:100%;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text)}
-button,input,textarea,select{font-family:inherit}
-.app{max-width:430px;margin:auto;min-height:100vh;background:linear-gradient(180deg,#fff,#f8f9fc);position:relative;overflow:hidden}
-.status{height:24px;padding:6px 18px 0;display:flex;justify-content:space-between;font-size:11px;direction:ltr;color:#111827}
-.top{height:78px;padding:6px 20px 0;display:flex;align-items:center;justify-content:center;text-align:center}
-.subtitle{font-size:13px;color:#9aa3b4;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.title{font-size:29px;font-weight:900;letter-spacing:-.7px;margin-top:7px}
-.content{height:calc(100vh - 102px);overflow-y:auto;padding:18px 20px 128px}.content::-webkit-scrollbar{width:0}
-.screen{display:none;animation:f .22s ease}.screen.active{display:block}@keyframes f{from{opacity:.3;transform:translateY(8px)}to{opacity:1;transform:none}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow)}
-.empty{min-height:210px;padding:34px 24px;text-align:center;color:#7b8497;line-height:2;display:flex;flex-direction:column;align-items:center;justify-content:center}.empty-title{font-size:18px;font-weight:900;color:#70798b;margin-bottom:18px}.empty .btn{width:210px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid4{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.stat{padding:18px;min-height:112px}.stat.primary{background:linear-gradient(135deg,var(--violet),var(--blue2));color:#fff;border:0}.stat .k{font-size:12px;font-weight:900;opacity:.75}.stat .v{font-size:31px;font-weight:900;margin-top:12px}.stat .h{font-size:11px;margin-top:7px;opacity:.72}
-.progress{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:4px 0 22px}.bar{height:9px;border-radius:99px;background:#d8dee8}.bar.active{background:var(--blue)}
-.field{margin:16px 0}.label{font-size:13px;font-weight:900;color:#697386;margin-bottom:9px}.input{width:100%;min-height:52px;border:1px solid var(--line);border-radius:18px;background:#f8fafc;padding:0 15px;font-size:15px;color:#202637;text-align:right}.textarea{height:96px;padding-top:12px;resize:none;line-height:1.8}
-.ltr{direction:ltr;text-align:left;unicode-bidi:plaintext}
-.sender-card{padding:14px;margin-bottom:12px}.sender-grid{display:grid;grid-template-columns:1fr;gap:10px}.smallbtn{height:38px;border:1px solid #ffd9d9;border-radius:14px;background:#fff;font-weight:900;color:var(--red);padding:0 12px;margin-top:10px}.add-number{height:50px;width:100%;border:1px dashed #b8c1d1;background:#fbfcff;border-radius:20px;color:var(--blue);font-weight:900;font-size:15px}
-.summary{padding:22px;margin-top:10px}.sumrow{display:grid;grid-template-columns:90px 1fr;gap:8px;margin:18px 0;font-size:16px}.sumrow .k{color:#6b7280}.sumrow .v{font-weight:800}.num-pill{display:block;background:#f3f6fb;border:1px solid var(--line);border-radius:16px;padding:10px;margin:8px 0;font-size:13px}.num-pill b{display:block;color:#202637}.num-pill span{display:block;color:#7b8497;margin-top:4px}
-.btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:26px}.btn{height:56px;border-radius:22px;border:1px solid #d9dee8;background:#fff;font-size:16px;font-weight:900;color:#202637;cursor:pointer}.btn.primary{background:var(--blue);border-color:var(--blue);color:white}.btn.danger{color:var(--red);border-color:#ffd7d7}
-.nav{position:absolute;bottom:0;left:0;right:0;height:82px;background:#fff;border-top:1px solid #dde3ee;display:grid;grid-template-columns:repeat(4,1fr);padding:8px 8px 12px;z-index:20;box-shadow:0 -14px 28px rgba(15,23,42,.10)}
-.nav button{border:0;background:transparent;border-radius:18px;color:#6f7a8e;font-weight:900;font-size:11px;cursor:pointer}
-.nav button.active{color:var(--blue);background:#e9f5ff}
-.list{display:flex;flex-direction:column;gap:12px}.row{padding:16px;display:flex;align-items:center;gap:12px}.avatar{width:46px;height:46px;border-radius:17px;background:linear-gradient(135deg,var(--violet),#2563eb);display:grid;place-items:center;color:white;font-weight:900;flex:0 0 auto}.body{flex:1;min-width:0}.rt{font-weight:900;font-size:14px}.rs{font-size:11px;color:var(--muted);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tag{font-size:10px;background:#eafaf2;color:var(--green);border-radius:999px;padding:7px 9px;font-weight:900;white-space:nowrap}.tag.red{background:#fff0f0;color:var(--red)}.tag.blue{background:#eef7ff;color:var(--blue)}.tag.gray{background:#f1f3f7;color:#7b8497}
-.rule-card.off{opacity:.55;filter:grayscale(.25)}
-.rule-num{width:42px;height:42px;border-radius:16px;background:#eef7ff;color:var(--blue);display:grid;place-items:center;font-weight:900;flex:0 0 auto;font-size:18px}
-.rule-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px;align-items:center}
-.rule-action{height:38px;border:1px solid var(--line);background:#fff;border-radius:14px;font-size:12px;font-weight:900;color:var(--blue);cursor:pointer}
-.rule-action.danger{color:var(--red);border-color:#ffd9d9}
-.confirm-delete{display:none;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.confirm-delete.show{display:grid}
-.fab{position:absolute;left:24px;bottom:104px;width:58px;height:58px;border-radius:22px;border:0;background:linear-gradient(135deg,var(--violet),#2563eb);color:white;font-size:30px;box-shadow:0 18px 35px rgba(109,93,252,.3);z-index:15;display:none;cursor:pointer}.fab:active{transform:scale(.94)}
-.toggle{width:46px;height:26px;border-radius:99px;background:#cbd5e1;position:relative;cursor:pointer}.toggle:after{content:"";width:20px;height:20px;border-radius:50%;background:white;position:absolute;right:3px;top:3px;box-shadow:0 2px 7px #0003}.toggle.on{background:linear-gradient(135deg,var(--violet),#2563eb)}.toggle.on:after{right:23px}
-.toggle-wrap{display:flex;align-items:center;gap:8px;justify-content:center}
-.settings-card{padding:16px;margin-bottom:13px}.settings-head{display:flex;align-items:center;gap:12px}.settings-icon{width:48px;height:48px;border-radius:18px;background:linear-gradient(135deg,var(--violet),#2563eb);display:grid;place-items:center;color:#fff;font-weight:900}.settings-main{flex:1}.settings-title{font-weight:900;font-size:15px}.settings-sub{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.7}
-.pill-btn{height:42px;border:1px solid var(--line);border-radius:16px;background:#fff;padding:0 13px;font-weight:900;color:var(--blue)}
-.toast{position:absolute;left:20px;right:20px;bottom:108px;background:#111827;color:white;border-radius:18px;min-height:48px;display:none;align-items:center;justify-content:center;font-size:13px;z-index:30;padding:8px;text-align:center}
-@media(min-width:900px){body{padding:24px}.app{height:860px;min-height:860px;border-radius:34px;box-shadow:0 30px 90px #0f172a2b}.content{height:calc(860px - 102px)}}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>TAK SMS Forwarder</title>
+  <style>
+    :root{
+      --bg:#f7f8fc;
+      --page:#ffffff;
+      --card:#ffffff;
+      --card2:#f5f7fc;
+      --text:#10172a;
+      --muted:#78829a;
+      --line:#e8ebf3;
+      --blue:#2563eb;
+      --blue2:#38bdf8;
+      --violet:#6d5dfc;
+      --violet2:#8b5cf6;
+      --green:#18a66a;
+      --red:#ef4444;
+      --orange:#f59e0b;
+      --shadow:0 12px 32px rgba(15,23,42,.08);
+      --shadow2:0 20px 50px rgba(15,23,42,.12);
+      --radius:22px;
+      --radius2:18px;
+    }
+
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:Tahoma, Arial, sans-serif;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(109,93,252,.14), transparent 28%),
+        radial-gradient(circle at 90% 12%, rgba(37,99,235,.10), transparent 24%),
+        var(--bg);
+      color:var(--text);
+      overflow-x:hidden;
+    }
+
+    .app-shell{
+      width:100%;
+      max-width:430px;
+      min-height:100vh;
+      margin:auto;
+      background:linear-gradient(180deg,#fff 0%,#fbfcff 55%,#f7f8fc 100%);
+      position:relative;
+      overflow:hidden;
+      box-shadow:0 0 0 1px rgba(15,23,42,.04);
+    }
+
+    .statusbar{
+      height:30px;
+      padding:8px 18px 0;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:11px;
+      direction:ltr;
+      color:#0f172a;
+      opacity:.9;
+    }
+
+    .topbar{
+      height:58px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 18px;
+    }
+
+    .page-title{
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:-.3px;
+    }
+
+    .icon-btn{
+      width:38px;
+      height:38px;
+      border:0;
+      background:transparent;
+      border-radius:14px;
+      color:#26324b;
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+    }
+
+    .icon-btn svg{width:21px;height:21px;stroke-width:2}
+
+    .content{
+      height:calc(100vh - 88px);
+      overflow-y:auto;
+      padding:0 16px 100px;
+      scroll-behavior:smooth;
+    }
+
+    .content::-webkit-scrollbar{width:0}
+
+    .screen{display:none;animation:fadeUp .28s ease both}
+    .screen.active{display:block}
+
+    @keyframes fadeUp{
+      from{opacity:0;transform:translateY(12px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+    .card{
+      background:rgba(255,255,255,.94);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+
+    .stat{
+      min-height:104px;
+      padding:15px;
+      overflow:hidden;
+      position:relative;
+    }
+    .stat::after{
+      content:"";
+      position:absolute;
+      width:94px;height:94px;border-radius:50%;
+      left:-34px;top:-38px;
+      background:rgba(255,255,255,.14);
+    }
+    .stat.primary{
+      border:0;
+      color:white;
+      background:linear-gradient(135deg,var(--violet),var(--blue));
+      box-shadow:0 18px 38px rgba(109,93,252,.24);
+    }
+    .stat.light{
+      background:linear-gradient(145deg,#fff,#f1f5ff);
+    }
+    .stat-label{font-size:12px;color:inherit;opacity:.78;font-weight:800}
+    .stat-num{font-size:30px;font-weight:900;margin-top:9px;letter-spacing:-.8px}
+    .stat-hint{font-size:10.5px;margin-top:5px;opacity:.72}
+    .stat.light .stat-label{color:#566178}.stat.light .stat-hint{color:#8790a4}.stat.light .stat-num{color:#3153d4}
+
+    .mini-stat{
+      padding:13px 8px;
+      text-align:center;
+      min-height:82px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+    }
+    .mini-stat .n{font-size:23px;font-weight:900;color:var(--violet)}
+    .mini-stat .l{font-size:11px;font-weight:800;color:#626b80;margin-top:4px}
+
+    .section-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin:18px 2px 10px;
+    }
+    .section-head h3{margin:0;font-size:14px;font-weight:900}
+    .link{font-size:11px;color:var(--violet);font-weight:900}
+
+    .chart-card{padding:14px;margin-top:12px}
+    .chart-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .pill{
+      height:30px;
+      border:1px solid var(--line);
+      background:#f7f8fc;
+      border-radius:999px;
+      padding:0 12px;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:11px;
+      font-weight:800;
+      color:#526079;
+      white-space:nowrap;
+    }
+    .pill.active{
+      color:#fff;
+      border-color:transparent;
+      background:linear-gradient(135deg,var(--violet),var(--blue));
+      box-shadow:0 8px 20px rgba(109,93,252,.22);
+    }
+    .chart-svg{width:100%;height:140px;display:block;overflow:visible}
+
+    .list{display:flex;flex-direction:column;gap:10px}
+    .row{
+      min-height:68px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:12px;
+      background:rgba(255,255,255,.96);
+      border:1px solid var(--line);
+      border-radius:19px;
+      box-shadow:0 8px 22px rgba(15,23,42,.055);
+    }
+    .avatar{
+      width:44px;height:44px;border-radius:16px;
+      display:grid;place-items:center;
+      color:white;font-weight:900;
+      flex:0 0 auto;
+      box-shadow:0 8px 18px rgba(37,99,235,.16);
+    }
+    .blue{background:linear-gradient(135deg,#0ea5e9,#2563eb)}
+    .violet{background:linear-gradient(135deg,#8b5cf6,#4f46e5)}
+    .red{background:linear-gradient(135deg,#ef4444,#dc2626)}
+    .green{background:linear-gradient(135deg,#22c55e,#16a34a)}
+    .orange{background:linear-gradient(135deg,#f59e0b,#fb923c)}
+    .gray{background:linear-gradient(135deg,#94a3b8,#64748b)}
+
+    .row-body{flex:1;min-width:0}
+    .row-title{font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .row-sub{font-size:10.8px;color:var(--muted);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .row-side{display:flex;flex-direction:column;align-items:flex-start;gap:7px}
+    .time{font-size:10px;color:#7a8295;white-space:nowrap}
+    .tag{
+      height:24px;padding:0 9px;border-radius:999px;
+      display:inline-flex;align-items:center;justify-content:center;
+      font-size:10px;font-weight:900;white-space:nowrap;
+    }
+    .tag.green{background:#e9faf2;color:#12915e}
+    .tag.blue{background:#eef5ff;color:#2563eb}
+    .tag.violet{background:#f1efff;color:#6d5dfc}
+    .tag.orange{background:#fff6e8;color:#c97806}
+    .tag.red{background:#fff0f0;color:#dc2626}
+
+    .search{
+      height:46px;
+      border:1px solid var(--line);
+      background:#f5f7fb;
+      border-radius:18px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:0 14px;
+      color:#8b93a7;
+      font-size:12px;
+      margin-bottom:12px;
+    }
+    .search svg{width:18px;height:18px}
+    .chips{
+      display:flex;
+      gap:8px;
+      overflow-x:auto;
+      padding-bottom:10px;
+      margin-bottom:2px;
+      direction:rtl;
+    }
+    .chips::-webkit-scrollbar{height:0}
+    .chip{
+      height:32px;
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:999px;
+      padding:0 14px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:11px;
+      font-weight:900;
+      color:#4b556b;
+      white-space:nowrap;
+      flex:0 0 auto;
+    }
+    .chip.active{
+      color:white;
+      border-color:transparent;
+      background:linear-gradient(135deg,var(--violet),var(--blue));
+    }
+
+    .toggle{
+      width:42px;height:24px;border-radius:999px;background:#cbd5e1;position:relative;flex:0 0 auto;
+      transition:.25s;
+    }
+    .toggle::after{
+      content:"";width:18px;height:18px;background:white;border-radius:50%;position:absolute;top:3px;right:3px;
+      box-shadow:0 2px 6px rgba(15,23,42,.22);transition:.25s;
+    }
+    .toggle.on{background:linear-gradient(135deg,var(--violet),var(--blue))}
+    .toggle.on::after{right:21px}
+
+    .rule-card{
+      padding:14px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .rule-icon{
+      width:48px;height:48px;border-radius:18px;background:#f1f5ff;
+      display:grid;place-items:center;color:var(--blue);flex:0 0 auto;
+    }
+    .rule-icon svg{width:23px;height:23px}
+    .rule-text{flex:1;min-width:0}
+    .rule-title{font-size:13px;font-weight:900}
+    .rule-sub{font-size:10.5px;color:var(--muted);margin-top:5px;line-height:1.7}
+
+    .settings-group{margin-bottom:16px}
+    .group-title{font-size:12px;font-weight:900;color:#6b7280;margin:0 4px 9px}
+    .setting-row{
+      min-height:56px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:10px 12px;
+      border-bottom:1px solid #edf0f6;
+    }
+    .setting-row:last-child{border-bottom:0}
+    .setting-icon{width:34px;height:34px;border-radius:13px;background:#f1f5ff;color:var(--violet);display:grid;place-items:center;flex:0 0 auto}
+    .setting-icon svg{width:18px;height:18px}
+    .setting-main{flex:1;min-width:0}
+    .setting-title{font-size:12.5px;font-weight:900}
+    .setting-sub{font-size:10.2px;color:var(--muted);margin-top:4px}
+    .value{font-size:11px;color:#566178;font-weight:800}
+
+    .detail-head{
+      padding:16px;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      margin-bottom:12px;
+      background:linear-gradient(135deg,var(--violet),var(--blue));
+      color:white;
+      border:0;
+      box-shadow:0 18px 38px rgba(109,93,252,.23);
+    }
+    .detail-head .avatar{box-shadow:none;background:rgba(255,255,255,.18)}
+    .detail-title{font-size:16px;font-weight:900}
+    .detail-sub{font-size:11px;opacity:.78;margin-top:5px;direction:ltr;text-align:right}
+    .info-card{padding:4px 12px;margin-bottom:12px}
+    .info-line{
+      min-height:42px;display:flex;align-items:center;justify-content:space-between;
+      border-bottom:1px solid #edf0f6;font-size:12px;
+    }
+    .info-line:last-child{border-bottom:0}
+    .info-label{color:#6b7280;font-weight:800}
+    .info-value{font-weight:900}
+    .message-body{padding:16px;line-height:2;font-size:13px;color:#202942}
+    .action-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-top:12px}
+    .action{
+      height:44px;border:1px solid var(--line);background:#fff;border-radius:16px;
+      font-size:11px;font-weight:900;color:var(--blue);display:flex;align-items:center;justify-content:center;gap:7px;
+    }
+    .action.danger{color:var(--red);border-color:#ffd8d8;background:#fffafa}
+
+    .contact-row .avatar{width:42px;height:42px}
+    .star{font-size:19px;color:#fbbf24;line-height:1}
+    .star.off{color:#cbd5e1}
+    .contact-actions{display:flex;align-items:center;gap:8px}
+    .mini-round{
+      width:32px;height:32px;border-radius:12px;background:#f1f5ff;color:var(--blue);
+      display:grid;place-items:center;
+    }
+    .mini-round svg{width:17px;height:17px}
+
+    .fab{
+      position:absolute;
+      left:22px;
+      bottom:78px;
+      width:56px;
+      height:56px;
+      border-radius:22px;
+      border:0;
+      color:white;
+      background:linear-gradient(135deg,var(--violet),var(--blue));
+      box-shadow:0 18px 38px rgba(109,93,252,.35);
+      display:grid;
+      place-items:center;
+      z-index:20;
+      cursor:pointer;
+      transition:.2s;
+    }
+    .fab:active{transform:scale(.94)}
+    .fab svg{width:25px;height:25px}
+
+    .bottom-nav{
+      position:absolute;
+      bottom:0;
+      left:0;
+      right:0;
+      height:76px;
+      background:rgba(255,255,255,.92);
+      backdrop-filter:blur(18px);
+      border-top:1px solid rgba(226,232,240,.82);
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      padding:8px 8px 10px;
+      z-index:18;
+    }
+    .nav-item{
+      border:0;background:transparent;border-radius:17px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+      color:#8b93a7;font-size:10px;font-weight:900;cursor:pointer;
+    }
+    .nav-item svg{width:21px;height:21px;stroke-width:2}
+    .nav-item.active{
+      color:var(--violet);
+      background:#f2f0ff;
+    }
+
+    .toast{
+      position:absolute;
+      left:18px;
+      right:18px;
+      bottom:90px;
+      min-height:46px;
+      background:#10172a;
+      color:white;
+      border-radius:18px;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:10px 14px;
+      font-size:12px;
+      z-index:40;
+      box-shadow:var(--shadow2);
+      animation:fadeUp .25s ease both;
+    }
+
+    @media (min-width:900px){
+      body{padding:24px}
+      .app-shell{
+        border-radius:34px;
+        min-height:860px;
+        height:860px;
+        box-shadow:0 30px 90px rgba(15,23,42,.18);
+      }
+      .content{height:calc(860px - 88px)}
+    }
+
+    @media (max-width:430px){
+      .app-shell{max-width:none}
+    }
+  </style>
 </head>
 <body>
-<main class="app">
-<div class="status"><span>12:30</span><span>LTE ▰</span></div>
-<header class="top">
-  <div><div class="subtitle" id="subTitle">وضعیت کلی سیستم</div><div class="title" id="title">داشبورد</div></div>
-</header>
-
-<section class="content">
-  <div class="screen active" id="dashboard">
-    <div class="grid2">
-      <div class="card stat primary"><div class="k">فیلترها</div><div class="v" id="dashRulesNum">۰</div><div class="h">قانون ذخیره‌شده</div></div>
-      <div class="card stat"><div class="k">پیامک‌ها</div><div class="v" id="dashSmsNum">۰</div><div class="h">دریافت‌شده</div></div>
+  <main class="app-shell">
+    <div class="statusbar">
+      <span>12:30</span>
+      <span>●  LTE  ▰</span>
     </div>
-    <div class="card row" style="margin-top:14px"><div class="avatar">ON</div><div class="body"><div class="rt">وضعیت سرویس</div><div class="rs" id="dashServiceText">در حال بررسی...</div></div><div class="toggle" id="dashServiceToggle"></div></div>
-    <div class="grid2" style="margin-top:12px">
-      <div class="card stat"><div class="k">ارسال موفق</div><div class="v" id="dashOkNum">۰</div><div class="h">SMS / Email</div></div>
-      <div class="card stat"><div class="k">خطاها</div><div class="v" id="dashErrNum">۰</div><div class="h">ارسال ناموفق</div></div>
-    </div>
-    <button class="btn primary" style="width:100%;margin-top:18px" id="goAddFromDash">افزودن فیلتر جدید</button>
-  </div>
 
-  <div class="screen" id="wizard">
-    <div class="progress"><div class="bar active"></div><div class="bar" id="b2"></div><div class="bar" id="b3"></div><div class="bar" id="b4"></div></div>
-    <div id="stepBox"></div>
-    <div class="btns"><button class="btn primary" id="nextBtn">بعدی</button><button class="btn" id="backBtn">قبلی</button></div>
-  </div>
+    <header class="topbar">
+      <button class="icon-btn" onclick="showToast('اعلان‌ها')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+      <div class="page-title" id="pageTitle">داشبورد</div>
+      <button class="icon-btn" onclick="showToast('منوی اصلی')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </header>
 
-  <div class="screen" id="filters"><div class="list" id="rulesList"></div></div>
-  <div class="screen" id="history"><div class="list" id="messagesList"></div></div>
+    <section class="content">
+      <div class="screen active" id="dashboard">
+        <div class="grid2">
+          <div class="card stat primary">
+            <div class="stat-label">پیامک‌های امروز</div>
+            <div class="stat-num">۱۲۸</div>
+            <div class="stat-hint">۱۸٪ بیشتر از دیروز</div>
+          </div>
+          <div class="card stat light">
+            <div class="stat-label">فوروارد شده</div>
+            <div class="stat-num">۹۷</div>
+            <div class="stat-hint">۲۲٪ بیشتر از دیروز</div>
+          </div>
+        </div>
 
-  <div class="screen" id="settings">
-    <div class="settings-card card">
-      <div class="settings-head">
-        <div class="settings-icon">🔋</div>
-        <div class="settings-main"><div class="settings-title">تنظیمات Battery</div><div class="settings-sub" id="batterySub">برای کار پس‌زمینه روی Unrestricted بگذار.</div></div>
-        <button class="pill-btn" id="batteryBtn">باز کردن</button>
+        <div class="grid3" style="margin-top:12px">
+          <div class="card mini-stat"><div class="n">۱۲</div><div class="l">قوانین فعال</div></div>
+          <div class="card mini-stat"><div class="n">۳۶</div><div class="l">مخاطبین</div></div>
+          <div class="card mini-stat"><div class="n">۲</div><div class="l">SIM فعال</div></div>
+        </div>
+
+        <div class="card chart-card">
+          <div class="chart-top">
+            <b style="font-size:13px">نمودار فعالیت هفتگی</b>
+            <span class="pill">هفته گذشته</span>
+          </div>
+          <svg class="chart-svg" viewBox="0 0 320 140">
+            <defs>
+              <linearGradient id="g1" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#6d5dfc" stop-opacity=".28"/>
+                <stop offset="100%" stop-color="#6d5dfc" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path d="M12 112H308" stroke="#edf0f6"/><path d="M12 84H308" stroke="#edf0f6"/><path d="M12 56H308" stroke="#edf0f6"/><path d="M12 28H308" stroke="#edf0f6"/>
+            <path d="M18 98 L65 82 L110 96 L155 58 L200 88 L246 60 L302 74" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M18 98 L65 82 L110 96 L155 58 L200 88 L246 60 L302 74 L302 122 L18 122 Z" fill="url(#g1)"/>
+            <g fill="#2563eb">
+              <circle cx="18" cy="98" r="4"/><circle cx="65" cy="82" r="4"/><circle cx="110" cy="96" r="4"/><circle cx="155" cy="58" r="4"/><circle cx="200" cy="88" r="4"/><circle cx="246" cy="60" r="4"/><circle cx="302" cy="74" r="4"/>
+            </g>
+            <g fill="#8b93a7" font-size="9" text-anchor="middle">
+              <text x="18" y="136">شنبه</text><text x="65" y="136">یکشنبه</text><text x="110" y="136">دوشنبه</text><text x="155" y="136">سه‌شنبه</text><text x="200" y="136">چهارشنبه</text><text x="246" y="136">پنجشنبه</text><text x="302" y="136">جمعه</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="section-head">
+          <h3>فعالیت‌های اخیر</h3>
+          <span class="link">مشاهده همه</span>
+        </div>
+        <div class="list">
+          <div class="row">
+            <div class="avatar red">م</div>
+            <div class="row-body">
+              <div class="row-title">پیامک از بانک ملت</div>
+              <div class="row-sub">کد تایید شما با موفقیت فوروارد شد.</div>
+            </div>
+            <div class="row-side"><span class="time">۱۱:۴۵</span><span class="tag green">فوروارد شد</span></div>
+          </div>
+          <div class="row">
+            <div class="avatar green">۱</div>
+            <div class="row-body">
+              <div class="row-title">همراه اول</div>
+              <div class="row-sub">بسته اینترنتی فعال شد.</div>
+            </div>
+            <div class="row-side"><span class="time">۱۰:۳۲</span><span class="tag blue">تحویل داده شد</span></div>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="settings-card card">
-      <div class="settings-head">
-        <div class="settings-icon">ON</div>
-        <div class="settings-main"><div class="settings-title">فعال‌سازی سرویس</div><div class="settings-sub">دریافت و فوروارد SMS جدید</div></div>
-        <div class="toggle" id="settingsServiceToggle"></div>
+
+      <div class="screen" id="messages">
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          جستجو در پیامک‌ها
+        </div>
+        <div class="chips">
+          <span class="chip active">همه</span><span class="chip">بانک‌ها</span><span class="chip">فوروارد شده</span><span class="chip">خوانده نشده</span><span class="chip">تبلیغاتی</span>
+        </div>
+        <div class="list">
+          <div class="row" onclick="go('detail')"><div class="avatar red">م</div><div class="row-body"><div class="row-title">بانک ملت</div><div class="row-sub">کد تایید شما ۹۸۷۶۵ است. لطفاً این کد را...</div></div><div class="row-side"><span class="time">۱۱:۴۵</span><span class="tag green">فوروارد شد</span></div></div>
+          <div class="row"><div class="avatar green">۱</div><div class="row-body"><div class="row-title">همراه اول</div><div class="row-sub">بسته اینترنتی شما با موفقیت فعال شد.</div></div><div class="row-side"><span class="time">۱۰:۳۲</span><span class="tag blue">تحویل داده شد</span></div></div>
+          <div class="row"><div class="avatar red">د</div><div class="row-body"><div class="row-title">دیجی‌کالا</div><div class="row-sub">سفارش شما با شماره ۱۲۳۴۵۶ ثبت شد.</div></div><div class="row-side"><span class="time">دیروز</span><span class="tag green">فوروارد شد</span></div></div>
+          <div class="row"><div class="avatar violet">ب</div><div class="row-body"><div class="row-title">بانک ملی</div><div class="row-sub">تراکنش کارت به مبلغ ۵۰۰,۰۰۰ ریال انجام شد.</div></div><div class="row-side"><span class="time">دیروز</span><span class="tag violet">خوانده نشده</span></div></div>
+          <div class="row"><div class="avatar green">!</div><div class="row-body"><div class="row-title">اسنپ</div><div class="row-sub">کد تایید اسنپ: ۴۵۶۷ - این کد را با کسی...</div></div><div class="row-side"><span class="time">۲ روز پیش</span><span class="tag green">فوروارد شد</span></div></div>
+        </div>
       </div>
-    </div>
 
-    <div class="settings-card card">
-      <div class="settings-title">تنظیمات Email / SMTP</div>
-      <div class="field"><div class="label">SMTP Host</div><input class="input ltr" id="smtpHost" placeholder="smtp.gmail.com"></div>
-      <div class="field"><div class="label">SMTP Port</div><input class="input ltr" id="smtpPort" placeholder="465"></div>
-      <div class="field"><div class="label">SMTP Username</div><input class="input ltr" id="smtpUsername" placeholder="your@email.com"></div>
-      <div class="field"><div class="label">SMTP Password / App Password</div><input class="input ltr" id="smtpPassword" placeholder="password" type="password"></div>
-      <div class="field"><div class="label">From Email</div><input class="input ltr" id="smtpFrom" placeholder="your@email.com"></div>
-      <button class="btn primary" id="saveSettingsBtn" style="width:100%">ذخیره تنظیمات</button>
-      <button class="btn" id="testIncomingBtn" style="width:100%;margin-top:12px">افزودن SMS تست</button>
-    </div>
-  </div>
+      <div class="screen" id="rules">
+        <div class="card rule-card" style="margin-bottom:12px">
+          <div class="rule-icon"><b style="font-size:24px">۱۲</b></div>
+          <div class="rule-text"><div class="rule-title">فعال‌سازی خودکار</div><div class="rule-sub">پیامک‌های ورودی بر اساس قوانین فیلتر می‌شوند.</div></div>
+          <div class="toggle on"></div>
+        </div>
+        <div class="list">
+          <div class="card rule-card"><div class="rule-icon">🏦</div><div class="rule-text"><div class="rule-title">پیامک‌های بانکی</div><div class="rule-sub">شامل کلمات: بانک، کارت، تراکنش<br>فوروارد به: تلگرام - مالی</div></div><div class="toggle on"></div></div>
+          <div class="card rule-card"><div class="rule-icon">🛡</div><div class="rule-text"><div class="rule-title">کدهای تایید OTP</div><div class="rule-sub">شامل کلمات: کد تایید، رمز یکبار مصرف<br>فوروارد به: تلگرام - کدها</div></div><div class="toggle on"></div></div>
+          <div class="card rule-card"><div class="rule-icon">🏷</div><div class="rule-text"><div class="rule-title">تبلیغات</div><div class="rule-sub">شامل کلمات: تخفیف، فروش، ویژه<br>فوروارد به: تلگرام - تبلیغات</div></div><div class="toggle on"></div></div>
+          <div class="card rule-card"><div class="rule-icon">⚙</div><div class="rule-text"><div class="rule-title">پیامک‌های سیستمی</div><div class="rule-sub">شامل کلمات: همراه اول، ایرانسل، رایتل<br>فوروارد به: تلگرام - سیستم</div></div><div class="toggle"></div></div>
+        </div>
+      </div>
 
-  <div class="screen" id="messageDetail"><div id="messageDetailBox"></div></div>
-</section>
+      <div class="screen" id="settings">
+        <div class="settings-group">
+          <div class="group-title">عمومی</div>
+          <div class="card">
+            <div class="setting-row"><div class="setting-icon">▶</div><div class="setting-main"><div class="setting-title">فعال‌سازی سرویس</div><div class="setting-sub">روشن / خاموش کردن سرویس فوروارد پیامک</div></div><div class="toggle on"></div></div>
+            <div class="setting-row"><div class="setting-icon">⚡</div><div class="setting-main"><div class="setting-title">اجرای خودکار در شروع</div><div class="setting-sub">اجرای سرویس هنگام بوت دستگاه</div></div><div class="toggle on"></div></div>
+            <div class="setting-row"><div class="setting-icon">ز</div><div class="setting-main"><div class="setting-title">زبان برنامه</div></div><div class="value">فارسی</div></div>
+            <div class="setting-row"><div class="setting-icon">☼</div><div class="setting-main"><div class="setting-title">تم برنامه</div></div><div class="value">روشن</div></div>
+          </div>
+        </div>
+        <div class="settings-group">
+          <div class="group-title">تنظیمات فوروارد</div>
+          <div class="card">
+            <div class="setting-row"><div class="setting-icon">✈</div><div class="setting-main"><div class="setting-title">روش فوروارد</div><div class="setting-sub">فوروارد از طریق تلگرام</div></div><div class="value">تلگرام</div></div>
+            <div class="setting-row"><div class="setting-icon">◷</div><div class="setting-main"><div class="setting-title">تاخیر فوروارد</div></div><div class="value">بدون تاخیر</div></div>
+            <div class="setting-row"><div class="setting-icon">☁</div><div class="setting-main"><div class="setting-title">گزارش تحویل</div><div class="setting-sub">دریافت گزارش از پیام‌های فوروارد شده</div></div><div class="toggle on"></div></div>
+          </div>
+        </div>
+      </div>
 
-<button class="fab" id="fab">+</button>
+      <div class="screen" id="detail">
+        <div class="card detail-head">
+          <div class="avatar">م</div>
+          <div class="row-body">
+            <div class="detail-title">بانک ملت</div>
+            <div class="detail-sub">+98 300 123 45 67</div>
+          </div>
+        </div>
+        <div class="card info-card">
+          <div class="info-line"><span class="info-label">زمان دریافت</span><span class="info-value">۱۴۰۴/۰۲/۲۳ - ۱۱:۴۵</span></div>
+          <div class="info-line"><span class="info-label">SIM منبع</span><span class="info-value">SIM 1 - همراه اول</span></div>
+          <div class="info-line"><span class="info-label">قانون منطبق</span><span class="info-value">پیامک‌های بانکی</span></div>
+          <div class="info-line"><span class="info-label">وضعیت</span><span class="tag green">فوروارد شد</span></div>
+        </div>
+        <div class="section-head"><h3>محتوای پیام</h3></div>
+        <div class="card message-body">
+          مشتری گرامی،<br>
+          تراکنش کارت به مبلغ ۵۰۰,۰۰۰ ریال در تاریخ ۱۴۰۴/۰۲/۲۳ ساعت ۱۱:۴۵ با موفقیت انجام شد.<br>
+          کد پیگیری: ۳۳۱۲۴۵۶۷۸۹<br>
+          بانک ملت
+        </div>
+        <div class="action-row">
+          <button class="action" onclick="showToast('متن کپی شد')">کپی متن</button>
+          <button class="action" onclick="showToast('فوروارد دستی انجام شد')">فوروارد دستی</button>
+          <button class="action danger" onclick="showToast('پیام حذف شد')">حذف</button>
+        </div>
+      </div>
 
-<nav class="nav">
-  <button data-page="settings">تنظیمات</button>
-  <button data-page="history">پیام‌ها</button>
-  <button data-page="filters">فیلترها</button>
-  <button data-page="dashboard" class="active">داشبورد</button>
-</nav>
+      <div class="screen" id="contacts">
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          جستجو در مخاطبین
+        </div>
+        <div class="chips">
+          <span class="chip active">همه</span><span class="chip">تلگرام</span><span class="chip">ایتا</span><span class="chip">سروش</span><span class="chip">مهم</span>
+        </div>
+        <div class="list">
+          <div class="row contact-row"><div class="avatar blue">✈</div><div class="row-body"><div class="row-title">مالی</div><div class="row-sub">@mali_channel · تلگرام</div></div><div class="contact-actions"><span class="star">★</span></div></div>
+          <div class="row contact-row"><div class="avatar violet">✓</div><div class="row-body"><div class="row-title">کدهای تایید</div><div class="row-sub">@otp_codes · تلگرام</div></div><div class="contact-actions"><span class="star off">★</span></div></div>
+          <div class="row contact-row"><div class="avatar orange">📣</div><div class="row-body"><div class="row-title">تبلیغات</div><div class="row-sub">@ads_channel · تلگرام</div></div><div class="contact-actions"><span class="star">★</span></div></div>
+          <div class="row contact-row"><div class="avatar gray">⚙</div><div class="row-body"><div class="row-title">سیستم</div><div class="row-sub">@system_alerts · تلگرام</div></div><div class="contact-actions"><span class="star off">★</span></div></div>
+          <div class="row contact-row"><div class="avatar green">☏</div><div class="row-body"><div class="row-title">پشتیبانی</div><div class="row-sub">@support_bot · تلگرام</div></div><div class="contact-actions"><span class="star off">★</span></div></div>
+        </div>
+      </div>
+    </section>
 
-<div class="toast" id="toast"></div>
-</main>
+    <button class="fab" id="fab" onclick="showToast('افزودن آیتم جدید')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
 
-<script>
-let step=1, editingId="", detailMessage=null;
-let form={name:"",type:"OTP",senders:[{number:"",note:""}],keywords:"همه",forwardType:"history",smsTarget:"",emailTarget:"",enabled:true};
-let rules=[], messages=[], settings={}, statusObj={};
-const $=id=>document.getElementById(id);
-const bridge=()=>window.AndroidBridge||null;
+    <nav class="bottom-nav">
+      <button class="nav-item" data-page="settings" data-title="تنظیمات" onclick="go('settings')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.38 1.05V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1A1.65 1.65 0 0 0 3 13.62H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 1 1 7.04 4.3l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6A1.65 1.65 0 0 0 10.38 3V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.37.36.7.65 1 .3.29.63.51 1 .65H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51.35Z"/></svg>
+        تنظیمات
+      </button>
+      <button class="nav-item" data-page="contacts" data-title="مخاطبین" onclick="go('contacts')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        مخاطبین
+      </button>
+      <button class="nav-item" data-page="rules" data-title="قوانین فیلتر" onclick="go('rules')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 4h18l-7 8v6l-4 2v-8L3 4Z"/></svg>
+        قوانین
+      </button>
+      <button class="nav-item" data-page="messages" data-title="پیامک‌ها" onclick="go('messages')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>
+        پیامک‌ها
+      </button>
+      <button class="nav-item active" data-page="dashboard" data-title="داشبورد" onclick="go('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>
+        داشبورد
+      </button>
+    </nav>
 
-function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function fa(n){return String(n).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d])}
-function toast(t){$('toast').textContent=t;$('toast').style.display='flex';clearTimeout(window.tt);window.tt=setTimeout(()=>$('toast').style.display='none',1800)}
-function readStep(){
- if(step===1){form.name=$('fName')?.value.trim()||"";form.type=$('fType')?.value.trim()||"OTP"}
- if(step===2){
-  form.senders=[];
-  document.querySelectorAll('.sender-card').forEach(c=>{
-   const number=c.querySelector('.sender-number').value.trim();
-   const note=c.querySelector('.sender-note').value.trim();
-   if(number||note) form.senders.push({number,note});
-  });
-  form.keywords=$('fKeywords')?.value.trim()||"همه";
- }
- if(step===3){
-  form.forwardType=$('fForwardType')?.value||"history";
-  form.smsTarget=$('fSmsTarget')?.value.trim()||"";
-  form.emailTarget=$('fEmailTarget')?.value.trim()||"";
- }
-}
-function show(page){
- document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
- $(page).classList.add('active');
- document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
- $('fab').style.display=page==='filters'?'block':'none';
+    <div class="toast" id="toast">انجام شد</div>
+  </main>
 
- if(page==='dashboard'){ $('title').textContent='داشبورد'; $('subTitle').textContent='وضعیت کلی سیستم'; refresh(); renderDashboard();}
- if(page==='wizard'){ $('title').textContent=editingId?'ویرایش فیلتر':'افزودن فیلتر'; $('subTitle').textContent='SMS / Email / History'; renderStep();}
- if(page==='filters'){ $('title').textContent='فیلترها'; $('subTitle').textContent='ساخت، ویرایش و کنترل قوانین'; refresh(); renderRules();}
- if(page==='history'){ $('title').textContent='پیام‌ها'; $('subTitle').textContent='History و وضعیت ارسال'; refresh(); renderMessages();}
- if(page==='settings'){ $('title').textContent='تنظیمات'; $('subTitle').textContent='SMS و Email'; refresh(); renderSettings();}
- if(page==='messageDetail'){ $('title').textContent='جزئیات پیام'; $('subTitle').textContent='متن و وضعیت ارسال'; renderMessageDetail();}
-}
-function resetForm(){step=1;editingId="";form={name:"",type:"OTP",senders:[{number:"",note:""}],keywords:"همه",forwardType:"history",smsTarget:"",emailTarget:"",enabled:true}}
-function editRule(id){const r=rules.find(x=>x.id===id); if(!r)return; editingId=r.id; step=1; form=JSON.parse(JSON.stringify(r)); if(!form.senders||!form.senders.length)form.senders=[{number:"",note:""}]; show('wizard')}
-function renderStep(){
- $('b2').classList.toggle('active',step>=2);$('b3').classList.toggle('active',step>=3);$('b4').classList.toggle('active',step>=4);
- $('backBtn').style.visibility=step>1?'visible':'hidden';
- $('nextBtn').textContent=step===4?'ذخیره':'بعدی';
- let html='';
- if(step===1) html=`<div class="field"><div class="label">نام فیلتر</div><input class="input" id="fName" value="${esc(form.name)}" placeholder="مثلاً بانک‌ها"></div><div class="field"><div class="label">نوع فیلتر</div><input class="input" id="fType" value="${esc(form.type)}" placeholder="OTP / بانک / تبلیغات"></div>`;
- if(step===2) html=`<div class="field"><div class="label">شماره‌های فرستنده</div><div style="font-size:12px;color:#8b94a7;line-height:1.9;margin-bottom:12px">هر شماره جدا داخل یک کارت ثبت می‌شود و توضیح جدا می‌گیرد.</div><div id="sendersBox"></div><button class="add-number" id="addNumberBtn">+ افزودن شماره جدید</button></div><div class="field"><div class="label">کلمات کلیدی - شرط AND</div><textarea class="input textarea" id="fKeywords">${esc(form.keywords)}</textarea></div>`;
- if(step===3) html=`<div class="field"><div class="label">نوع فوروارد</div><select class="input" id="fForwardType"><option value="history">فقط History</option><option value="sms">SMS</option><option value="email">Email</option></select></div><div class="field"><div class="label">شماره مقصد SMS</div><input class="input ltr" id="fSmsTarget" value="${esc(form.smsTarget)}" placeholder="0912..."></div><div class="field"><div class="label">ایمیل مقصد</div><input class="input ltr" id="fEmailTarget" value="${esc(form.emailTarget)}" placeholder="example@email.com"></div><div class="card row"><div class="avatar">ON</div><div class="body"><div class="rt">وضعیت فیلتر</div><div class="rs">فعال باشد</div></div><div class="toggle ${form.enabled?'on':''}" id="enabledToggle"></div></div>`;
- if(step===4) html=`<div class="card summary"><div style="font-size:22px;font-weight:900;margin-bottom:20px">خلاصه</div><div class="sumrow"><div class="k">نام</div><div class="v">${esc(form.name)}</div></div><div class="sumrow"><div class="k">شماره‌ها</div><div class="v">${numberSummary()}</div></div><div class="sumrow"><div class="k">کلمات</div><div class="v">${esc(form.keywords||'همه')}</div></div><div class="sumrow"><div class="k">فوروارد</div><div class="v">${esc(form.forwardType)}</div></div></div>`;
- $('stepBox').innerHTML=html;
- if(step===2) renderSenderCards();
- if(step===3){$('fForwardType').value=form.forwardType||'history';$('enabledToggle').onclick=()=>{form.enabled=!form.enabled;$('enabledToggle').classList.toggle('on',form.enabled)}}
-}
-function numberSummary(){
- if(!form.senders.length)return '<span class="num-pill"><b>همه شماره‌ها</b><span>بدون محدودیت فرستنده</span></span>';
- return form.senders.map(x=>`<span class="num-pill"><b class="ltr">${esc(x.number||'همه شماره‌ها')}</b><span>${esc(x.note||'بدون توضیح')}</span></span>`).join('');
-}
-function renderSenderCards(){
- if(!form.senders.length)form.senders=[{number:"",note:""}];
- $('sendersBox').innerHTML=form.senders.map((x,i)=>`<div class="card sender-card"><div class="sender-grid"><div><div class="label">شماره ${fa(i+1)}</div><input class="input ltr sender-number" value="${esc(x.number)}" placeholder="0098100099 یا MALIAT"></div><div><div class="label">توضیح این شماره</div><input class="input sender-note" value="${esc(x.note)}" placeholder="مثلاً بانک ملت، مالیات، حسابداری"></div></div><button class="smallbtn" data-del="${i}">حذف این شماره</button></div>`).join('');
- document.querySelectorAll('[data-del]').forEach(btn=>btn.onclick=()=>{readStep();form.senders.splice(+btn.dataset.del,1);if(!form.senders.length)form.senders.push({number:"",note:""});renderStep()});
- $('addNumberBtn').onclick=()=>{readStep();form.senders.push({number:"",note:""});renderStep()};
-}
-function saveRule(){
- readStep();
- if(!form.name){toast('نام فیلتر را وارد کن');step=1;renderStep();return}
- form.senders=form.senders.filter(x=>x.number||x.note);
- const rule={id:editingId,name:form.name,type:form.type,senders:form.senders,keywords:form.keywords,forwardType:form.forwardType,smsTarget:form.smsTarget,emailTarget:form.emailTarget,enabled:form.enabled};
- let ok=false;
- if(bridge()) ok=bridge().saveRule(JSON.stringify(rule)); else{let arr=JSON.parse(localStorage.getItem('rules')||'[]');if(!rule.id)rule.id=String(Date.now());let idx=arr.findIndex(x=>x.id===rule.id);if(idx>=0)arr[idx]=rule;else arr.push(rule);localStorage.setItem('rules',JSON.stringify(arr));ok=true}
- if(ok){toast('فیلتر ذخیره شد');resetForm();refresh();show('filters')}else toast('ذخیره نشد');
-}
-function refresh(){
- if(bridge()){try{rules=JSON.parse(bridge().getRules()||'[]');messages=JSON.parse(bridge().getMessages()||'[]');settings=JSON.parse(bridge().getSettings()||'{}');statusObj=JSON.parse(bridge().getStatus()||'{}')}catch(e){statusObj={}}}
- else{rules=JSON.parse(localStorage.getItem('rules')||'[]');messages=[];settings=JSON.parse(localStorage.getItem('settings')||'{}');statusObj={receiveSms:false,sendSms:false,enabled:true,battery:false}}
-}
-function renderDashboard(){
- $('dashRulesNum').textContent=fa(rules.length); $('dashSmsNum').textContent=fa(messages.length);
- $('dashOkNum').textContent=fa(messages.filter(m=>(m.status||'').includes('موفق')).length);
- $('dashErrNum').textContent=fa(messages.filter(m=>(m.status||'').includes('خطا')).length);
- $('dashServiceText').textContent=statusObj.enabled?'سرویس روشن است':'سرویس خاموش است';
- $('dashServiceToggle').classList.toggle('on',!!statusObj.enabled);
-}
-function renderSettings(){
- $('settingsServiceToggle').classList.toggle('on',!!statusObj.enabled);
- $('batterySub').textContent=statusObj.battery?'Battery روی Unrestricted است':'برای کار پس‌زمینه روی Unrestricted بگذار.';
- $('smtpHost').value=settings.smtpHost||''; $('smtpPort').value=settings.smtpPort||'465'; $('smtpUsername').value=settings.smtpUsername||''; $('smtpPassword').value=settings.smtpPassword||''; $('smtpFrom').value=settings.smtpFrom||'';
-}
-function renderRules(){
- if(!rules.length){$('rulesList').innerHTML=`<div class="card empty"><div class="empty-title">هنوز فیلتری ثبت نشده</div><button class="btn primary" id="emptyAddBtn">افزودن اولین فیلتر</button></div>`;$('emptyAddBtn').onclick=()=>{resetForm();show('wizard')};return}
- $('rulesList').innerHTML=rules.map((r,i)=>{const nums=(r.senders||[]).map(x=>`<span class="ltr">${esc(x.number||'همه')}</span> - ${esc(x.note||'بدون توضیح')}`).join('<br>');const off=!r.enabled;return `<div class="card row rule-card ${off?'off':''}"><div class="rule-num">${fa(i+1)}</div><div class="body"><div class="rt">${esc(r.name)}</div><div class="rs">${nums||'همه شماره‌ها'} · ${esc(r.forwardType||'history')}</div><div class="rule-actions"><button class="rule-action edit" data-id="${r.id}">ویرایش</button><button class="rule-action danger askdel" data-id="${r.id}">حذف</button><div class="toggle-wrap"><span class="tag ${r.enabled?'':'gray'}">${r.enabled?'فعال':'غیرفعال'}</span><div class="toggle ${r.enabled?'on':''} togglerule" data-id="${r.id}" data-on="${r.enabled?1:0}"></div></div></div><div class="confirm-delete" id="confirm-${r.id}"><button class="rule-action cancel-del" data-id="${r.id}">انصراف</button><button class="rule-action danger del" data-id="${r.id}">حذف قطعی</button></div></div></div>`}).join('');
- document.querySelectorAll('.edit').forEach(b=>b.onclick=()=>editRule(b.dataset.id));
- document.querySelectorAll('.askdel').forEach(b=>b.onclick=()=>{$('confirm-'+b.dataset.id)?.classList.add('show')});
- document.querySelectorAll('.cancel-del').forEach(b=>b.onclick=()=>{$('confirm-'+b.dataset.id)?.classList.remove('show')});
- document.querySelectorAll('.del').forEach(b=>b.onclick=()=>{if(bridge())bridge().deleteRule(b.dataset.id);else localStorage.setItem('rules',JSON.stringify(rules.filter(x=>x.id!==b.dataset.id)));refresh();renderRules();toast('حذف شد')});
- document.querySelectorAll('.togglerule').forEach(b=>b.onclick=()=>{const on=b.dataset.on!=='1';if(bridge())bridge().toggleRule(b.dataset.id,on);refresh();renderRules()});
-}
-function renderMessages(){
- if(!messages.length){$('messagesList').innerHTML='<div class="card empty"><div class="empty-title">هنوز پیامکی دریافت نشده</div></div>';return}
- $('messagesList').innerHTML=messages.map((m,i)=>`<div class="card row msg" data-i="${i}"><div class="avatar">SMS</div><div class="body"><div class="rt ltr">${esc(m.sender)}</div><div class="rs">فیلتر: ${esc(m.ruleName||'بدون فیلتر')}</div><div class="rs">${esc(m.body)}</div><div class="rs">وضعیت: ${esc(m.status||'')}</div></div><span class="tag">${esc(m.forwardType||'')}</span></div>`).join('');
- document.querySelectorAll('.msg').forEach(x=>x.onclick=()=>{detailMessage=messages[+x.dataset.i];show('messageDetail')});
-}
-function renderMessageDetail(){
- const m=detailMessage;if(!m){$('messageDetailBox').innerHTML='';return}
- $('messageDetailBox').innerHTML=`<div class="card summary"><div style="font-size:22px;font-weight:900;margin-bottom:18px" class="ltr">${esc(m.sender)}</div><div class="sumrow"><div class="k">فیلتر</div><div class="v">${esc(m.ruleName)}</div></div><div class="sumrow"><div class="k">ارسال</div><div class="v">${esc(m.status)}</div></div><div class="sumrow"><div class="k">مقصد</div><div class="v ltr">${esc(m.forwardTarget)}</div></div><div class="sumrow"><div class="k">خطا</div><div class="v">${esc(m.error)}</div></div><div style="line-height:2;margin-top:18px">${esc(m.body)}</div></div>`;
-}
-function saveSettings(){
- const s={smtpHost:$('smtpHost').value.trim(),smtpPort:$('smtpPort').value.trim()||'465',smtpUsername:$('smtpUsername').value.trim(),smtpPassword:$('smtpPassword').value.trim(),smtpFrom:$('smtpFrom').value.trim()};
- let ok=false;if(bridge())ok=bridge().saveSettings(JSON.stringify(s));else{localStorage.setItem('settings',JSON.stringify(s));ok=true}toast(ok?'تنظیمات ذخیره شد':'ذخیره نشد');refresh();
-}
-function toggleService(on){if(bridge())bridge().setEnabled(on);statusObj.enabled=on;toast(on?'سرویس روشن شد':'سرویس خاموش شد');refresh();const active=document.querySelector('.screen.active')?.id;if(active==='dashboard')renderDashboard();if(active==='settings')renderSettings();}
-$('nextBtn').onclick=()=>{readStep();if(step<4){step++;renderStep()}else saveRule()};
-$('backBtn').onclick=()=>{readStep();if(step>1){step--;renderStep()}};
-$('fab').onclick=()=>{resetForm();show('wizard')}; $('goAddFromDash').onclick=()=>{resetForm();show('wizard')};
-$('dashServiceToggle').onclick=()=>toggleService(!$('dashServiceToggle').classList.contains('on'));
-$('settingsServiceToggle').onclick=()=>toggleService(!$('settingsServiceToggle').classList.contains('on'));
-$('batteryBtn').onclick=()=>{if(bridge())bridge().openBatterySettings();else toast('داخل اپ اندروید کار می‌کند')};
-$('saveSettingsBtn').onclick=saveSettings;
-$('testIncomingBtn').onclick=()=>{if(bridge()){bridge().addTestIncomingSms();refresh();toast('SMS تست اضافه شد')}else toast('داخل اپ اندروید کار می‌کند')};
-document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset.page));
-window.App={refresh:()=>{refresh();const active=document.querySelector('.screen.active')?.id||'dashboard'; if(active==='dashboard')renderDashboard(); if(active==='filters')renderRules(); if(active==='history')renderMessages(); if(active==='settings')renderSettings();}};
-refresh();renderDashboard();
-</script>
+  <script>
+    const titles = {
+      dashboard:'داشبورد',
+      messages:'پیامک‌ها',
+      rules:'قوانین فیلتر',
+      settings:'تنظیمات',
+      detail:'جزئیات پیام',
+      contacts:'مخاطبین'
+    };
+
+    function go(page){
+      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+      document.getElementById(page).classList.add('active');
+      document.getElementById('pageTitle').textContent = titles[page] || 'داشبورد';
+
+      document.querySelectorAll('.nav-item').forEach(n=>{
+        n.classList.toggle('active', n.dataset.page === page);
+      });
+
+      const fab = document.getElementById('fab');
+      fab.style.display = ['messages','rules','contacts'].includes(page) ? 'grid' : 'none';
+
+      document.querySelector('.content').scrollTop = 0;
+    }
+
+    let toastTimer;
+    function showToast(text){
+      const t = document.getElementById('toast');
+      t.textContent = text;
+      t.style.display = 'flex';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=> t.style.display='none', 1700);
+    }
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      document.getElementById('fab').style.display='none';
+    });
+  </script>
 </body>
 </html>
