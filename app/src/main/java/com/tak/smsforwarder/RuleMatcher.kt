@@ -54,6 +54,33 @@ object RuleMatcher {
             .filter { it.isNotBlank() && it != "همه" && it.lowercase() != "all" }
     }
 
+    private fun senderItems(rule: JSONObject): List<String> {
+        val out = mutableListOf<String>()
+        val senders = rule.optJSONArray("senders")
+        if (senders != null) {
+            for (i in 0 until senders.length()) {
+                val item = senders.optJSONObject(i)
+                if (item != null) out.add(item.optString("number", ""))
+                else out.add(senders.optString(i, ""))
+            }
+        }
+        out.addAll(parseList(rule.optString("senderNumbers", "")))
+        out.addAll(parseList(rule.optString("senderNumber", "")))
+        out.addAll(parseList(rule.optString("sender", "")))
+        return out.map { it.trim() }.filter { it.isNotBlank() && it != "همه" && it.lowercase() != "all" }
+    }
+
+    private fun senderMatches(actualSender: String, ruleSender: String): Boolean {
+        val actualNumber = normalizeNumber(actualSender)
+        val wantedNumber = normalizeNumber(ruleSender)
+        if (wantedNumber.isBlank()) return true
+        if (actualNumber.contains(wantedNumber) || wantedNumber.contains(actualNumber)) return true
+
+        val actualText = normalizeText(actualSender)
+        val wantedText = normalizeText(ruleSender)
+        return actualText.contains(wantedText) || wantedText.contains(actualText)
+    }
+
     private fun orderedTokensMatch(messageTokens: List<String>, phraseTokens: List<String>): Boolean {
         if (phraseTokens.isEmpty()) return true
         var pos = 0
@@ -93,26 +120,17 @@ object RuleMatcher {
 
     fun match(context: Context, sender: String, body: String): JSONObject? {
         val message = "$sender $body"
-        val normalizedSender = normalizeNumber(sender)
         val rules = DataStore.getRulesArray(context)
 
         for (i in 0 until rules.length()) {
             val rule = rules.optJSONObject(i) ?: continue
             if (!rule.optBoolean("enabled", true)) continue
 
-            var senderOk = false
-            val senders = rule.optJSONArray("senders")
-            if (senders == null || senders.length() == 0) {
-                senderOk = true
+            val senderList = senderItems(rule)
+            val senderOk = if (senderList.isEmpty()) {
+                true
             } else {
-                for (j in 0 until senders.length()) {
-                    val item = senders.optJSONObject(j) ?: continue
-                    val number = normalizeNumber(item.optString("number", ""))
-                    if (number.isBlank() || normalizedSender.contains(number) || number.contains(normalizedSender)) {
-                        senderOk = true
-                        break
-                    }
-                }
+                senderList.any { senderMatches(sender, it) }
             }
 
             val keywordsOk = legacyKeywordsOk(message, rule.optString("keywords", ""))
@@ -126,12 +144,11 @@ object RuleMatcher {
 
     fun senderNote(rule: JSONObject?, sender: String): String {
         if (rule == null) return ""
-        val ns = normalizeNumber(sender)
         val senders = rule.optJSONArray("senders") ?: return ""
         for (i in 0 until senders.length()) {
             val item = senders.optJSONObject(i) ?: continue
-            val n = normalizeNumber(item.optString("number", ""))
-            if (n.isBlank() || ns.contains(n) || n.contains(ns)) return item.optString("note", "")
+            val n = item.optString("number", "")
+            if (senderMatches(sender, n)) return item.optString("note", "")
         }
         return ""
     }
